@@ -1,0 +1,23 @@
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+temp/
+
+# Local observability data should live in Docker volumes, not Git
+data/
+grafana-data/
+loki-data/
+tempo-data/
+prometheus-data/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

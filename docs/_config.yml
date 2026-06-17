@@ -1,0 +1,3 @@
+title: Codex Observability with OpenTelemetry and Grafana
+description: Local OpenTelemetry, Grafana LGTM, Loki, Tempo, Prometheus spanmetrics, and token economics for OpenAI Codex.
+theme: minima

@@ -1,0 +1,115 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://*
+  prometheus/collector:
+    config:
+      scrape_configs:
+        - job_name: "opentelemetry-collector"
+          scrape_interval: 1s
+          static_configs:
+            - targets: ["127.0.0.1:8888"]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: "/ready"
+
+processors:
+  transform/redact_codex_identity:
+    error_mode: ignore
+    trace_statements:
+      - context: resource
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+      - context: span
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+          - delete_key(attributes, "user_prompt")
+          - delete_key(attributes, "prompt")
+    metric_statements:
+      - context: resource
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+      - context: datapoint
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+          - delete_key(attributes, "user_prompt")
+          - delete_key(attributes, "prompt")
+    log_statements:
+      - context: resource
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+      - context: log
+        statements:
+          - delete_key(attributes, "user.email")
+          - delete_key(attributes, "user_email")
+          - delete_key(attributes, "user.account_id")
+          - delete_key(attributes, "user_account_id")
+          - delete_key(attributes, "user_prompt")
+          - delete_key(attributes, "prompt")
+  batch:
+
+exporters:
+  otlp_http/metrics:
+    endpoint: http://127.0.0.1:9090/api/v1/otlp
+    tls:
+      insecure: true
+  otlp_http/traces:
+    endpoint: http://127.0.0.1:4418
+    tls:
+      insecure: true
+  otlp_http/logs:
+    endpoint: http://127.0.0.1:3100/otlp
+    tls:
+      insecure: true
+  otlp/profiles:
+    endpoint: http://127.0.0.1:4040
+    tls:
+      insecure: true
+  debug/metrics:
+    verbosity: detailed
+  debug/traces:
+    verbosity: detailed
+  debug/logs:
+    verbosity: detailed
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [transform/redact_codex_identity, batch]
+      exporters: [otlp_http/traces]
+    metrics:
+      receivers: [otlp, prometheus/collector]
+      processors: [transform/redact_codex_identity, batch]
+      exporters: [otlp_http/metrics]
+    logs:
+      receivers: [otlp]
+      processors: [transform/redact_codex_identity, batch]
+      exporters: [otlp_http/logs]
+    profiles:
+      receivers: [otlp]
+      exporters: [otlp/profiles]
