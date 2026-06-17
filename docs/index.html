@@ -1,349 +1,265 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Codex Observability with OpenTelemetry and Grafana</title>
-    <meta name="description" content="A local OpenTelemetry and Grafana LGTM observability setup for OpenAI Codex with logs, traces, spanmetrics, token economics, and realistic troubleshooting playbooks.">
+    <meta name="description" content="Local OpenTelemetry and Grafana observability for Codex: logs, traces, metrics, token economics, cost panels, and realistic debugging playbooks.">
     <link rel="stylesheet" href="assets/site.css">
   </head>
   <body>
-    <div class="layout">
+    <div class="app-shell">
       <aside class="sidebar" aria-label="Documentation navigation">
-        <div class="brand">
-          <div class="brand-mark">O</div>
-          <div>
-            <div>Codex Observability</div>
-            <small class="muted">OpenTelemetry + Grafana</small>
-          </div>
-        </div>
+        <a class="brand" href="index.html" aria-label="Codex Observability home">
+          <span class="brand-mark">◆</span>
+          <span>Codex Observability</span>
+        </a>
 
         <nav>
-          <div class="nav-group">
-            <p class="nav-title">Start</p>
-            <a class="nav-link" href="#overview">Overview</a>
-            <a class="nav-link" href="#architecture">Architecture</a>
-            <a class="nav-link" href="#dashboards">Dashboards</a>
-            <a class="nav-link" href="#scenarios">Scenarios</a>
+          <div class="nav-section">
+            <a class="nav-link active" href="index.html"><span class="nav-icon">⌂</span>Overview</a>
+            <a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a>
           </div>
-          <div class="nav-group">
-            <p class="nav-title">Operate</p>
-            <a class="nav-link" href="#tokens">Token economics</a>
-            <a class="nav-link" href="#setup">Manual setup</a>
-            <a class="nav-link" href="#privacy">Privacy</a>
-            <a class="nav-link" href="#local-models">Local models</a>
+
+          <div class="nav-section">
+            <p class="nav-heading">Core Concepts</p>
+            <a class="nav-sub" href="architecture-and-operations.html">Architecture</a>
+            <a class="nav-sub" href="architecture-and-operations.html#signals">Events and Traces</a>
+            <a class="nav-sub" href="builder-metrics.html">Metrics</a>
+            <a class="nav-sub" href="builder-metrics.html#token-economics">Cost and Tokens</a>
+            <a class="nav-sub" href="architecture-and-operations.html#privacy">Privacy</a>
           </div>
-          <div class="nav-group">
-            <p class="nav-title">Reference</p>
-            <a class="nav-link" href="rebuild-guide.html">Rebuild guide</a>
-            <a class="nav-link" href="architecture-and-operations.html">Operations</a>
-            <a class="nav-link" href="builder-metrics.html">Builder metrics</a>
-            <a class="nav-link" href="publishing.html">Publishing</a>
+
+          <div class="nav-section">
+            <p class="nav-heading">Guides</p>
+            <a class="nav-sub" href="rebuild-guide.html">Instrumentation</a>
+            <a class="nav-sub" href="builder-metrics.html#dashboards">Dashboards</a>
+            <a class="nav-sub" href="builder-metrics.html#playbooks">Playbooks</a>
+            <a class="nav-sub" href="publishing.html">Publishing</a>
+          </div>
+
+          <div class="nav-section">
+            <p class="nav-heading">Playbooks</p>
+            <a class="nav-sub" href="#playbooks">High Error Rate</a>
+            <a class="nav-sub" href="#playbooks">Latency Spike</a>
+            <a class="nav-sub" href="#playbooks">Token Budget Exceeded</a>
+            <a class="nav-sub" href="#playbooks">Tool Failure Debugging</a>
           </div>
         </nav>
 
-        <div class="side-note">
-          Built from a verified Windows setup using Codex 0.139.0, Docker Desktop,
-          Grafana LGTM, Loki, Tempo, Prometheus-compatible metrics, and collector-side redaction.
+        <div class="help-card">
+          <strong>Local-first by design</strong>
+          <p>No hosted observability account is required. Docker Desktop runs the full LGTM stack on localhost.</p>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
-          <input id="docSearch" class="search" type="search" placeholder="Search page sections..." aria-label="Search page sections">
+          <div class="search-wrap">
+            <input id="docSearch" class="search" type="search" placeholder="Search docs..." aria-label="Search docs">
+            <span class="shortcut">⌘K</span>
+          </div>
           <div class="top-actions">
-            <a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub</a>
-            <a class="button primary" href="#setup">Rebuild it</a>
+            <a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a>
+            <a class="button" href="https://developers.openai.com/codex/config-advanced#open-telemetry">API Reference ↗</a>
+            <button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">☾</button>
+            <button class="button version" type="button">v1.0⌄</button>
           </div>
         </header>
 
         <div class="content">
-          <section id="overview" class="hero" data-search>
+          <section class="hero" data-search>
             <div>
-              <h1>Local observability for Codex that explains what happened and what it cost.</h1>
+              <h1>Codex Observability</h1>
               <p class="lead">
-                Run Codex with a local OpenTelemetry pipeline and inspect logs, traces,
-                spanmetrics, and token economics in Grafana. The dashboards are designed
-                around real builder questions: why is this run slow, which tool failed,
-                how many tokens did this task consume, and what should I optimize next?
+                End-to-end visibility for local Codex work. Instrument, observe,
+                troubleshoot, and optimize your AI coding sessions with logs,
+                traces, metrics, token economics, and cost panels.
               </p>
-              <div class="meta-row">
-                <span class="tag">Loki logs</span>
-                <span class="tag">Tempo traces</span>
-                <span class="tag">Prometheus spanmetrics</span>
-                <span class="tag">Token economics</span>
-                <span class="tag">Local-first</span>
+              <div class="hero-actions">
+                <a class="button primary" href="rebuild-guide.html">Get Started →</a>
+                <a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">View on GitHub ↗</a>
               </div>
-              <a class="button primary" href="#dashboards">Explore dashboards</a>
-              <a class="button" href="#tokens">Estimate cost</a>
             </div>
-            <div class="panel pad snapshot">
-              <h3>Verified local signals</h3>
-              <div class="snapshot-row">
-                <span>Loki records</span>
-                <span class="metric">51</span>
-              </div>
-              <div class="snapshot-row">
-                <span>Tempo traces</span>
-                <span class="metric">live</span>
-              </div>
-              <div class="snapshot-row">
-                <span>Spanmetric calls</span>
-                <span class="metric">192</span>
-              </div>
-              <div class="snapshot-row">
-                <span>Input tokens in smoke runs</span>
-                <span class="metric">44,971</span>
-              </div>
-              <p class="muted">These are example values from the validation run, not fixed dashboard targets.</p>
-            </div>
+
+            <aside class="panel pad release-card">
+              <h3>What is in v1.0</h3>
+              <ul>
+                <li>Codex OTLP logs, traces, and metrics</li>
+                <li>Loki, Tempo, and Prometheus dashboards</li>
+                <li>Token usage and estimated USD panels</li>
+                <li>Collector-side redaction before storage</li>
+                <li>Manual rebuild and publishing guides</li>
+              </ul>
+              <a href="rebuild-guide.html">Read the setup guide →</a>
+            </aside>
           </section>
 
           <section id="architecture" class="section" data-search>
-            <h2>Architecture Wireframe</h2>
-            <p class="lead">Codex emits telemetry to the local OpenTelemetry Collector. The collector redacts sensitive attributes, then routes each signal to the LGTM backend.</p>
-            <div class="panel wireframe">
-              <pre class="mermaid">
-flowchart LR
-  Codex["Codex CLI / Desktop"] -->|"OTLP HTTP logs"| Collector["OpenTelemetry Collector"]
-  Codex -->|"OTLP HTTP traces"| Collector
-  Codex -->|"OTLP HTTP metrics"| Collector
-  Collector -->|"redact attributes"| Scrub["Transform processor"]
-  Scrub --> Loki["Loki logs"]
-  Scrub --> Tempo["Tempo traces"]
-  Scrub --> Prom["Prometheus spanmetrics"]
-  Loki --> Grafana["Grafana"]
-  Tempo --> Grafana
-  Prom --> Grafana
-              </pre>
+            <div class="section-head">
+              <h2>Architecture Overview</h2>
+              <a href="architecture-and-operations.html">View full architecture →</a>
+            </div>
+            <div class="panel diagram">
+              <div class="diagram-grid" role="img" aria-label="Codex telemetry architecture">
+                <div class="diagram-col">
+                  <h3>Your Application</h3>
+                  <div class="diagram-node"><strong>Codex CLI</strong><span>Agent session</span></div>
+                  <div class="diagram-node"><strong>OTLP HTTP</strong><span>Logs, traces, metrics</span></div>
+                </div>
+                <div class="diagram-node"><strong>Ingestion</strong><span>Collector receives telemetry</span></div>
+                <div class="diagram-node"><strong>Processing</strong><span>Redact, batch, route</span></div>
+                <div class="diagram-node"><strong>Storage</strong><span>Loki, Tempo, Prometheus</span></div>
+                <div class="diagram-node"><strong>Serving</strong><span>Query and visualize</span></div>
+                <div class="diagram-col">
+                  <h3>Your Interfaces</h3>
+                  <div class="diagram-node"><strong>Dashboards</strong><span>Observe</span></div>
+                  <div class="diagram-node"><strong>Playbooks</strong><span>Debug</span></div>
+                </div>
+              </div>
             </div>
           </section>
 
           <section id="dashboards" class="section" data-search>
-            <h2>Dashboards Builders Actually Care About</h2>
+            <div class="section-head">
+              <h2>Key Dashboards</h2>
+              <a href="builder-metrics.html#dashboards">Explore all dashboards →</a>
+            </div>
+
             <div class="grid-4">
-              <article class="card dash-card">
+              <article class="card metric-card">
                 <h3>Loki Logs</h3>
-                <p><strong>Why builders care</strong></p>
-                <p>Logs explain the sequence of Codex events: startup phases, websocket events, completions, warnings, token-bearing records, and tool-related messages.</p>
-                <p><strong>Useful when</strong></p>
-                <p>A run completes but feels wrong, noisy, expensive, or suspiciously slow.</p>
+                <div class="mini-chart"></div>
+                <span class="muted">Recent records</span>
+                <span class="big-number">51</span>
+                <p class="muted">Event history, warnings, completion records, token labels, and correlation IDs.</p>
               </article>
-              <article class="card dash-card traces">
+
+              <article class="card metric-card">
                 <h3>Tempo Traces</h3>
-                <p><strong>Why builders care</strong></p>
-                <p>Traces show where time goes across startup, model calls, app-server work, tool setup, and response streaming.</p>
-                <p><strong>Useful when</strong></p>
-                <p>You need a bottleneck, not a guess.</p>
+                <div class="mini-bars">
+                  <span style="height:40%"></span><span style="height:78%"></span><span style="height:56%"></span><span style="height:88%"></span><span style="height:34%"></span>
+                </div>
+                <span class="muted">Bottleneck view</span>
+                <span class="big-number">p95</span>
+                <p class="muted">Trace exploration, span latency, model call phases, tool startup, and app-server work.</p>
               </article>
-              <article class="card dash-card">
-                <h3>Prometheus Metrics</h3>
-                <p><strong>Why builders care</strong></p>
-                <p>Metrics show collector health, accepted logs/spans/metric points, span throughput, p95 latency, and exporter failures.</p>
-                <p><strong>Useful when</strong></p>
-                <p>Grafana looks empty and you need to prove whether telemetry arrived.</p>
+
+              <article class="card metric-card">
+                <h3>Cost and Tokens</h3>
+                <div class="donut"></div>
+                <span class="muted">Estimated cost sample</span>
+                <span class="big-number">$0.18</span>
+                <p class="muted">Input, cached input, output, reasoning, tool tokens, cost trend, and cache savings.</p>
               </article>
-              <article class="card dash-card tokens">
-                <h3>Token Economics</h3>
-                <p><strong>Why builders care</strong></p>
-                <p>Token counts connect product behavior to cost: input, cached input, output, reasoning, and tool tokens per completion.</p>
-                <p><strong>Useful when</strong></p>
-                <p>A task works, but costs too much to repeat at scale.</p>
+
+              <article class="card metric-card">
+                <h3>Prometheus</h3>
+                <div class="mini-bars">
+                  <span style="height:48%"></span><span style="height:34%"></span><span style="height:61%"></span><span style="height:52%"></span><span style="height:92%"></span>
+                </div>
+                <span class="muted">Spanmetric calls</span>
+                <span class="big-number">192</span>
+                <p class="muted">Collector health, accepted telemetry, exporter failures, span rate, and latency buckets.</p>
               </article>
             </div>
           </section>
 
-          <section id="scenarios" class="section" data-search>
-            <h2>Realistic Troubleshooting Scenarios</h2>
+          <section class="section" data-search>
+            <h2>Built for AI Coding Teams</h2>
+            <div class="features">
+              <div class="feature">
+                <span class="feature-icon">◉</span>
+                <div><strong>Complete Visibility</strong><p class="muted">Logs, traces, spanmetrics, and token economics in one local stack.</p></div>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">◎</span>
+                <div><strong>Faster Debugging</strong><p class="muted">Pinpoint slow startup, tool failures, and missing telemetry quickly.</p></div>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">◈</span>
+                <div><strong>Privacy by Default</strong><p class="muted">Prompt logging is off and identity fields are scrubbed before storage.</p></div>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">$</span>
+                <div><strong>Optimize Costs</strong><p class="muted">Understand token usage, cache savings, and estimated spend.</p></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="playbooks" class="section" data-search>
+            <div class="section-head">
+              <h2>Scenario Playbooks</h2>
+              <a href="builder-metrics.html#playbooks">Browse all playbooks →</a>
+            </div>
+            <div class="panel playbook-table">
+              <table>
+                <thead>
+                  <tr><th>Scenario</th><th>Symptom</th><th>Dashboard</th><th>What you do</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>High Error Rate</td><td>Warnings or failures spike</td><td>Loki Logs</td><td>Filter warnings/errors and group by event name.</td></tr>
+                  <tr><td>Latency Spike</td><td>Slow first response or long run</td><td>Tempo Traces</td><td>Inspect span breakdown and p95 latency.</td></tr>
+                  <tr><td>Token Budget Exceeded</td><td>Runs get expensive</td><td>Token Economics</td><td>Compare input, cached, output, and cost panels.</td></tr>
+                  <tr><td>Tool Failure Debugging</td><td>MCP or tool calls time out</td><td>Loki + Tempo</td><td>Correlate logs with trace IDs and slow spans.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="calculator" class="section" data-search>
             <div class="grid-2">
-              <div class="scenario">
-                <div class="scenario-step">
-                  <span class="label">Symptom</span>
-                  <h3>Codex feels slow before the answer starts.</h3>
-                  <p class="muted">The run eventually succeeds, but users wait too long.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Dashboard</span>
-                  <h3>Tempo Traces</h3>
-                  <p class="muted">Open trace search and inspect `turn/start`, `serve_inner`, and span p95 latency.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Likely fix</span>
-                  <h3>Reduce startup and tool overhead.</h3>
-                  <p class="muted">Look for expensive tool initialization, slow MCP startup, or repeated context preparation.</p>
-                </div>
-              </div>
-
-              <div class="scenario">
-                <div class="scenario-step">
-                  <span class="label">Symptom</span>
-                  <h3>Dashboard has no data.</h3>
-                  <p class="muted">Grafana loads, but panels are empty after a Codex run.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Dashboard</span>
-                  <h3>Prometheus Metrics</h3>
-                  <p class="muted">Check OTLP accepted counters and exporter failures first.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Likely fix</span>
-                  <h3>Correct config or endpoint routing.</h3>
-                  <p class="muted">Verify inline OTLP exporter tables and `localhost:4318` endpoints.</p>
-                </div>
-              </div>
-
-              <div class="scenario">
-                <div class="scenario-step">
-                  <span class="label">Symptom</span>
-                  <h3>A task costs more than expected.</h3>
-                  <p class="muted">The answer is good, but the same workflow will run often.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Dashboard</span>
-                  <h3>Token Economics</h3>
-                  <p class="muted">Inspect input, cached input, output, reasoning, and tool tokens.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Likely fix</span>
-                  <h3>Optimize context and outputs.</h3>
-                  <p class="muted">Trim repeated context, improve cache reuse, constrain answer length, or select a cheaper model.</p>
-                </div>
-              </div>
-
-              <div class="scenario">
-                <div class="scenario-step">
-                  <span class="label">Symptom</span>
-                  <h3>Warnings appear during runs.</h3>
-                  <p class="muted">The run succeeds but shows plugin, MCP, or shell warnings.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Dashboard</span>
-                  <h3>Loki Logs</h3>
-                  <p class="muted">Filter warning and error records, then group by event and service version.</p>
-                </div>
-                <div class="scenario-step">
-                  <span class="label">Likely fix</span>
-                  <h3>Patch noisy dependencies.</h3>
-                  <p class="muted">Fix invalid plugin metadata, timeouts, or environment issues before they become flaky failures.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="tokens" class="section" data-search>
-            <h2>Token Economics Calculator</h2>
-            <p class="lead">Use the calculator to translate dashboard token counts into rough dollars. Rates are editable defaults based on the OpenAI API pricing page checked on June 18, 2026.</p>
-            <div class="panel pad calculator">
               <div>
-                <div class="field">
-                  <label for="model">Model pricing preset</label>
-                  <select id="model">
-                    <option>gpt-5.3-codex standard</option>
-                    <option>gpt-5.5 standard</option>
-                    <option>gpt-5.4 standard</option>
-                    <option>gpt-5.4-mini standard</option>
-                    <option>local model</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="runs">Runs per day</label>
-                  <input id="runs" type="number" min="0" value="25">
-                </div>
-                <div class="field">
-                  <label for="inputTokens">Input tokens per completion</label>
-                  <input id="inputTokens" type="number" min="0" value="22000">
-                </div>
-                <div class="field">
-                  <label for="cachedTokens">Cached input tokens per completion</label>
-                  <input id="cachedTokens" type="number" min="0" value="5000">
-                </div>
-                <div class="field">
-                  <label for="outputTokens">Output tokens per completion</label>
-                  <input id="outputTokens" type="number" min="0" value="1200">
-                </div>
+                <h2>Token Economics Calculator</h2>
+                <p class="lead">Use dashboard token counts to estimate dollar impact. The live Grafana dashboard now includes estimated USD panels using the same default rates.</p>
               </div>
-              <div class="result">
-                <div class="result-box">
-                  Per run
-                  <span id="perRunCost" class="value">$0.00</span>
+              <div class="panel pad calculator">
+                <div>
+                  <div class="field"><label for="model">Model</label><select id="model"><option>gpt-5.5 standard</option><option>gpt-5.4 standard</option><option>gpt-5.4-mini standard</option><option>gpt-5.3-codex standard</option><option>local model</option></select></div>
+                  <div class="field"><label for="inputTokens">Input tokens</label><input id="inputTokens" type="number" min="0" value="22000"></div>
+                  <div class="field"><label for="cachedTokens">Cached input tokens</label><input id="cachedTokens" type="number" min="0" value="5000"></div>
+                  <div class="field"><label for="outputTokens">Output tokens</label><input id="outputTokens" type="number" min="0" value="1200"></div>
+                  <div class="field"><label for="runs">Requests per day</label><input id="runs" type="number" min="0" value="25"></div>
                 </div>
-                <div class="result-box">
-                  Per day
-                  <span id="dailyCost" class="value">$0.00</span>
-                </div>
-                <div class="result-box">
-                  Per 30 days
-                  <span id="monthlyCost" class="value">$0.00</span>
-                </div>
-                <div class="result-box">
-                  Estimated cache savings per day
-                  <span id="cacheSavings" class="value">$0.00</span>
+                <div>
+                  <div class="result-box">Tokens / day<span id="tokensPerDay" class="value">0</span></div>
+                  <div class="result-box">Estimated cost / run<span id="perRunCost" class="value">$0.00</span></div>
+                  <div class="result-box">Estimated cost / day<span id="dailyCost" class="value">$0.00</span></div>
+                  <div class="result-box">Estimated cost / month<span id="monthlyCost" class="value">$0.00</span></div>
+                  <div class="result-box">Cache savings / day<span id="cacheSavings" class="value">$0.00</span></div>
                 </div>
               </div>
             </div>
-            <p class="warning">Pricing changes over time. Recheck the official OpenAI pricing page before using these numbers for budgeting.</p>
           </section>
 
-          <section id="setup" class="section" data-search>
-            <h2>Manual Setup Path</h2>
-            <div class="grid-3">
-              <div class="card">
-                <strong>1. Start LGTM</strong>
-                <p>Run Docker Desktop, then start `grafana/otel-lgtm` with the PowerShell script.</p>
-                <pre>.\observability\start-lgtm.ps1 -Pull</pre>
+          <section class="section" data-search>
+            <h2>Get Started in Minutes</h2>
+            <div class="panel code-panel">
+              <div class="tabs">
+                <button class="tab active" data-tab="powershell">PowerShell</button>
+                <button class="tab" data-tab="logql">LogQL</button>
+                <button class="tab" data-tab="toml">Codex config</button>
               </div>
-              <div class="card">
-                <strong>2. Configure Codex</strong>
-                <p>Set user-level OTLP exporters in `%USERPROFILE%\.codex\config.toml`.</p>
-                <pre>[otel]
+              <pre data-code="powershell">.\observability\start-lgtm.ps1 -Pull
+.\observability\setup-codex-dashboards.ps1
+codex exec "Say only: otel smoke test"</pre>
+              <pre data-code="logql" hidden>{service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"</pre>
+              <pre data-code="toml" hidden>[otel]
+environment = "local"
 log_user_prompt = false
-exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/logs", protocol = "binary" } }</pre>
-              </div>
-              <div class="card">
-                <strong>3. Provision dashboards</strong>
-                <p>Create repeatable Grafana dashboards through the local API.</p>
-                <pre>.\observability\setup-codex-dashboards.ps1</pre>
-              </div>
-            </div>
-          </section>
-
-          <section id="privacy" class="section" data-search>
-            <h2>Privacy and Redaction</h2>
-            <ul class="checklist">
-              <li>Prompt logging is disabled with `log_user_prompt = false`.</li>
-              <li>The collector drops user email and account ID attributes before storage.</li>
-              <li>The collector drops prompt-like attributes if future telemetry includes them.</li>
-              <li>Older records already stored in the Docker volume must be purged separately.</li>
-            </ul>
-          </section>
-
-          <section id="local-models" class="section" data-search>
-            <h2>Local Models and OSS Mode</h2>
-            <p class="lead">
-              The dashboards should still help when Codex runs against local providers because the telemetry is emitted by Codex. Logs, traces, collector health, and spanmetrics should work. Token economics depends on whether the provider returns token usage that Codex records.
-            </p>
-            <div class="grid-2">
-              <div class="card">
-                <strong>What continues to work</strong>
-                <p>Loki event records, Tempo trace shape, spanmetrics, collector health, warnings, startup phases, and troubleshooting flows.</p>
-              </div>
-              <div class="card">
-                <strong>What may change</strong>
-                <p>Token fields and dollar economics may be partial or zero for local providers. The calculator includes a `local model` preset with zero API token cost.</p>
-              </div>
+exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/logs", protocol = "binary" } }
+trace_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/traces", protocol = "binary" } }
+metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics", protocol = "binary" } }</pre>
             </div>
           </section>
 
           <footer class="footer">
-            Sources: OpenAI Codex OpenTelemetry docs, OpenAI Codex config reference, OpenAI local provider docs, OpenAI API pricing, and Grafana LGTM Docker documentation.
+            Sources: OpenAI Codex OpenTelemetry docs, OpenAI Codex local provider docs, OpenAI API pricing, and Grafana LGTM Docker documentation.
           </footer>
         </div>
       </main>
     </div>
-    <script type="module" src="assets/site.js"></script>
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "base" });
-    </script>
+
+    <script src="assets/site.js"></script>
   </body>
 </html>

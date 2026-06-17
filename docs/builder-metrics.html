@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Builder Metrics | Codex Observability</title><link rel="stylesheet" href="assets/site.css"></head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">◆</span><span>Codex Observability</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Builder Metrics</p><a class="nav-sub active" href="builder-metrics.html">Dashboards</a><a class="nav-sub" href="#token-economics">Token economics</a><a class="nav-sub" href="#playbooks">Playbooks</a><a class="nav-sub" href="#local-models">Local models</a></div></nav><div class="help-card"><strong>Value test</strong><p>A dashboard earns its place only if it shortens a debugging or cost decision.</p></div></aside>
+      <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..."><span class="shortcut">⌘K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a><button id="themeToggle" class="icon-button" type="button">☾</button><button class="button version" type="button">v1.0⌄</button></div></header>
+        <div class="content article" data-search>
+          <h1>Dashboards Builders Care About</h1>
+          <p class="lead">The stack is useful when it answers operational questions: what happened, where time went, what failed, how many tokens were used, and what the run likely cost.</p>
+          <h2 id="dashboards">Dashboard Jobs</h2>
+          <div class="grid-2"><div class="article-card"><h3>Loki Logs</h3><p>Best for event history, warnings, completion records, and trace IDs. Use it when the run succeeded but something looks off.</p></div><div class="article-card"><h3>Tempo Traces</h3><p>Best for latency. Use it when the run is slow and you need the exact bottleneck.</p></div><div class="article-card"><h3>Prometheus Metrics</h3><p>Best for proving ingestion health and monitoring spanmetric rate and latency.</p></div><div class="article-card"><h3>Token Economics</h3><p>Best for cost visibility. Use it when the workflow works but may not scale economically.</p></div></div>
+          <h2 id="token-economics">Token Economics and USD Panels</h2>
+          <p>The live Grafana dashboard now includes token counts and estimated USD panels. It uses Loki completion records and explicit pricing assumptions.</p>
+          <pre>{service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"</pre>
+          <div class="grid-2"><div class="article-card"><h3>Tracked tokens</h3><p>Input, cached input, output, reasoning, tool tokens, and completion count.</p></div><div class="article-card"><h3>Estimated dollars</h3><p>Total cost, input cost, output cost, cache savings, and cost trend. Defaults use gpt-5.5 standard pricing assumptions.</p></div></div>
+          <h2 id="playbooks">Realistic Playbooks</h2>
+          <table><thead><tr><th>Scenario</th><th>Dashboard</th><th>What it helps prove</th></tr></thead><tbody><tr><td>High error rate</td><td>Loki</td><td>Which event family is failing.</td></tr><tr><td>Slow run</td><td>Tempo</td><td>Whether the bottleneck is startup, tools, or model response.</td></tr><tr><td>Budget exceeded</td><td>Token Economics</td><td>Whether cost comes from repeated input, low cache reuse, or long output.</td></tr><tr><td>Empty dashboards</td><td>Prometheus</td><td>Whether the collector received telemetry at all.</td></tr></tbody></table>
+          <h2 id="local-models">Local Models</h2>
+          <p>Logs, traces, collector health, and spanmetrics should still help with Codex local providers because Codex emits the telemetry. Token economics depends on whether the provider returns token usage that Codex records. The calculator includes a local model preset with zero API token cost.</p>
+        </div>
+      </main>
+    </div>
+    <script src="assets/site.js"></script>
+  </body>
+</html>

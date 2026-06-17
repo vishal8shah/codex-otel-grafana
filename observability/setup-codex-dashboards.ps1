@@ -237,6 +237,15 @@ $prom.panels = @(
 
 $tokens = New-DashboardBase "Codex / Token Economics" "codex-token-economics"
 $completionSelector = '{service_name="$service"} | event_name="codex.sse_event" | event_kind="response.completed"'
+$inputRatePerMillion = 5
+$cachedInputRatePerMillion = 0.5
+$outputRatePerMillion = 30
+$inputCostExpr = "(sum(sum_over_time($completionSelector | unwrap input_token_count [`$__range])) - sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__range]))) * $inputRatePerMillion / 1000000"
+$cachedCostExpr = "sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__range])) * $cachedInputRatePerMillion / 1000000"
+$outputCostExpr = "sum(sum_over_time($completionSelector | unwrap output_token_count [`$__range])) * $outputRatePerMillion / 1000000"
+$totalCostExpr = "(($inputCostExpr) + ($cachedCostExpr) + ($outputCostExpr))"
+$cacheSavingsExpr = "sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__range])) * ($inputRatePerMillion - $cachedInputRatePerMillion) / 1000000"
+$intervalCostExpr = "(((sum(sum_over_time($completionSelector | unwrap input_token_count [`$__interval])) - sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__interval]))) * $inputRatePerMillion) + (sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__interval])) * $cachedInputRatePerMillion) + (sum(sum_over_time($completionSelector | unwrap output_token_count [`$__interval])) * $outputRatePerMillion)) / 1000000"
 $tokens.panels = @(
     (New-Panel 1 "Input tokens" "stat" (New-GridPos 0 0 4 4) "loki" "loki" @(
         (New-Target "A" "sum(sum_over_time($completionSelector | unwrap input_token_count [`$__range]))" "loki" "loki" "range")
@@ -256,20 +265,39 @@ $tokens.panels = @(
     (New-Panel 6 "Completions" "stat" (New-GridPos 20 0 4 4) "loki" "loki" @(
         (New-Target "A" "sum(count_over_time($completionSelector [`$__range]))" "loki" "loki" "range")
     ) @{ reduceOptions = @{ calcs = @("lastNotNull") }; orientation = "auto" }),
-    (New-Panel 7 "Token trend by type" "timeseries" (New-GridPos 0 4 16 9) "loki" "loki" @(
+    (New-Panel 7 "Estimated total cost" "stat" (New-GridPos 0 4 6 4) "loki" "loki" @(
+        (New-Target "A" $totalCostExpr "loki" "loki" "range")
+    ) @{ reduceOptions = @{ calcs = @("lastNotNull") }; orientation = "auto" } @{ defaults = @{ unit = "currencyUSD" } }),
+    (New-Panel 8 "Estimated input cost" "stat" (New-GridPos 6 4 6 4) "loki" "loki" @(
+        (New-Target "A" "(($inputCostExpr) + ($cachedCostExpr))" "loki" "loki" "range")
+    ) @{ reduceOptions = @{ calcs = @("lastNotNull") }; orientation = "auto" } @{ defaults = @{ unit = "currencyUSD" } }),
+    (New-Panel 9 "Estimated output cost" "stat" (New-GridPos 12 4 6 4) "loki" "loki" @(
+        (New-Target "A" $outputCostExpr "loki" "loki" "range")
+    ) @{ reduceOptions = @{ calcs = @("lastNotNull") }; orientation = "auto" } @{ defaults = @{ unit = "currencyUSD" } }),
+    (New-Panel 10 "Estimated cache savings" "stat" (New-GridPos 18 4 6 4) "loki" "loki" @(
+        (New-Target "A" $cacheSavingsExpr "loki" "loki" "range")
+    ) @{ reduceOptions = @{ calcs = @("lastNotNull") }; orientation = "auto" } @{ defaults = @{ unit = "currencyUSD" } }),
+    (New-Panel 11 "Cost trend" "timeseries" (New-GridPos 0 8 24 8) "loki" "loki" @(
+        (New-Target "A" $intervalCostExpr "loki" "loki" "range" "estimated USD")
+    ) @{ legend = @{ showLegend = $true; placement = "bottom" }; tooltip = @{ mode = "multi" } } @{ defaults = @{ unit = "currencyUSD" } }),
+    (New-Panel 12 "Token trend by type" "timeseries" (New-GridPos 0 16 16 9) "loki" "loki" @(
         (New-Target "A" "sum(sum_over_time($completionSelector | unwrap input_token_count [`$__interval]))" "loki" "loki" "range" "input")
         (New-Target "B" "sum(sum_over_time($completionSelector | unwrap output_token_count [`$__interval]))" "loki" "loki" "range" "output")
         (New-Target "C" "sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__interval]))" "loki" "loki" "range" "cached")
         (New-Target "D" "sum(sum_over_time($completionSelector | unwrap reasoning_token_count [`$__interval]))" "loki" "loki" "range" "reasoning")
     ) @{ legend = @{ showLegend = $true; placement = "bottom" }; tooltip = @{ mode = "multi" } }),
-    (New-Panel 8 "Token mix" "barchart" (New-GridPos 16 4 8 9) "loki" "loki" @(
+    (New-Panel 13 "Token mix" "barchart" (New-GridPos 16 16 8 9) "loki" "loki" @(
         (New-Target "A" "sum(sum_over_time($completionSelector | unwrap input_token_count [`$__range]))" "loki" "loki" "range" "input")
         (New-Target "B" "sum(sum_over_time($completionSelector | unwrap output_token_count [`$__range]))" "loki" "loki" "range" "output")
         (New-Target "C" "sum(sum_over_time($completionSelector | unwrap cached_token_count [`$__range]))" "loki" "loki" "range" "cached")
         (New-Target "D" "sum(sum_over_time($completionSelector | unwrap reasoning_token_count [`$__range]))" "loki" "loki" "range" "reasoning")
         (New-Target "E" "sum(sum_over_time($completionSelector | unwrap tool_token_count [`$__range]))" "loki" "loki" "range" "tool")
     ) @{ legend = @{ showLegend = $true; placement = "bottom" } }),
-    (New-Panel 9 "Completion records" "logs" (New-GridPos 0 13 24 9) "loki" "loki" @(
+    (New-Panel 14 "Pricing assumptions" "text" (New-GridPos 0 25 8 6) "loki" "loki" @() @{
+        mode = "markdown"
+        content = "Estimated USD uses configurable script defaults: input `$5.00/M`, cached input `$0.50/M`, output `$30.00/M`. Recheck official pricing before budgeting."
+    }),
+    (New-Panel 15 "Completion records" "logs" (New-GridPos 8 25 16 9) "loki" "loki" @(
         (New-Target "A" $completionSelector "loki" "loki" "range")
     ) @{ showTime = $true; showLabels = $true; wrapLogMessage = $true; sortOrder = "Descending" })
 )

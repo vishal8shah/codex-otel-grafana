@@ -81,11 +81,11 @@ The important detail is the inline exporter table. A plain
 
 GitHub Pages-ready documentation lives under `docs/`:
 
-- [Documentation Home](docs/index.md)
-- [Manual Rebuild Guide](docs/rebuild-guide.md)
-- [Architecture and Operations](docs/architecture-and-operations.md)
-- [Builder Metrics and Token Economics](docs/builder-metrics.md)
-- [Publishing to GitHub Pages](docs/publishing.md)
+- [Documentation Home](docs/index.html)
+- [Manual Rebuild Guide](docs/rebuild-guide.html)
+- [Architecture and Operations](docs/architecture-and-operations.html)
+- [Builder Metrics and Token Economics](docs/builder-metrics.html)
+- [Publishing to GitHub Pages](docs/publishing.html)
 
 ## Source References
 

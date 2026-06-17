@@ -35,7 +35,11 @@ spanmetrics. Codex `0.139.0` sends OTLP metric points, but this local LGTM stack
 does not currently expose separate `codex_*` application metric names in
 Prometheus.
 
-The token economics dashboard uses Loki completion records:
+The token economics dashboard uses Loki completion records and includes estimated
+USD panels for total cost, input cost, output cost, cache savings, and cost
+trend. The default pricing assumptions in `setup-codex-dashboards.ps1` are
+input `$5.00/M`, cached input `$0.50/M`, and output `$30.00/M`; recheck official
+pricing before budgeting.
 
 ```logql
 {service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quickstart | Codex Observability</title>
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="index.html"><span class="brand-mark">◆</span><span>Codex Observability</span></a>
+        <nav>
+          <div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>Overview</a><a class="nav-link active" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a></div>
+          <div class="nav-section"><p class="nav-heading">Core Concepts</p><a class="nav-sub" href="architecture-and-operations.html">Architecture</a><a class="nav-sub" href="builder-metrics.html">Metrics</a><a class="nav-sub" href="builder-metrics.html#token-economics">Cost and Tokens</a></div>
+          <div class="nav-section"><p class="nav-heading">Guides</p><a class="nav-sub" href="#docker">Docker</a><a class="nav-sub" href="#codex">Codex config</a><a class="nav-sub" href="#verify">Verify</a><a class="nav-sub" href="publishing.html">Publishing</a></div>
+        </nav>
+        <div class="help-card"><strong>Goal</strong><p>Rebuild the stack manually from a clean machine without guessing paths or ports.</p></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..."><span class="shortcut">⌘K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a><button id="themeToggle" class="icon-button" type="button">☾</button><button class="button version" type="button">v1.0⌄</button></div></header>
+        <div class="content article" data-search>
+          <h1>Quickstart and Manual Rebuild</h1>
+          <p class="lead">This is the shortest reliable path to reproduce the local Codex OpenTelemetry and Grafana setup.</p>
+          <div class="grid-3">
+            <div class="article-card"><h3>1. Start LGTM</h3><p class="muted">Runs Grafana, Loki, Tempo, Prometheus-compatible metrics, and the Collector.</p><pre>.\observability\start-lgtm.ps1 -Pull</pre></div>
+            <div class="article-card"><h3>2. Configure Codex</h3><p class="muted">Telemetry routing belongs in the user-level Codex config.</p><pre>%USERPROFILE%\.codex\config.toml</pre></div>
+            <div class="article-card"><h3>3. Provision dashboards</h3><p class="muted">Creates Loki, Tempo, Prometheus, and Token Economics dashboards.</p><pre>.\observability\setup-codex-dashboards.ps1</pre></div>
+          </div>
+          <h2 id="docker">Prerequisites</h2>
+          <ul><li>Windows 10 or later</li><li>Docker Desktop with WSL2 backend</li><li>Codex CLI installed and authenticated</li><li>PowerShell</li></ul>
+          <pre>docker --version
+docker info
+codex doctor</pre>
+          <h2 id="codex">Codex OpenTelemetry Config</h2>
+          <p>Use inline exporter tables. A plain <code>exporter = "otlp-http"</code> does not carry endpoint metadata.</p>
+          <pre>[otel]
+environment = "local"
+log_user_prompt = false
+exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/logs", protocol = "binary" } }
+trace_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/traces", protocol = "binary" } }
+metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics", protocol = "binary" } }</pre>
+          <h2 id="verify">Verify Signals</h2>
+          <div class="grid-3">
+            <div class="article-card"><h3>Loki</h3><pre>{service_name="Codex Desktop"}</pre></div>
+            <div class="article-card"><h3>Tempo</h3><pre>{ resource.service.name = "Codex Desktop" }</pre></div>
+            <div class="article-card"><h3>Prometheus</h3><pre>traces_spanmetrics_calls_total{service="Codex Desktop"}</pre></div>
+          </div>
+          <h2>Generate a Smoke Event</h2>
+          <pre>codex exec "Say only: otel smoke test"</pre>
+          <p class="callout">If dashboards are empty, first check collector accepted counters, then verify the Codex config endpoints point to <code>localhost:4318</code>.</p>
+        </div>
+      </main>
+    </div>
+    <script src="assets/site.js"></script>
+  </body>
+</html>

@@ -7,7 +7,11 @@ const pricing = {
 };
 
 const formatMoney = (value) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: value < 10 ? 4 : 2 }).format(value);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: value < 10 ? 4 : 2
+  }).format(value);
 
 function numberValue(id) {
   const value = Number(document.getElementById(id)?.value || 0);
@@ -15,22 +19,57 @@ function numberValue(id) {
 }
 
 function calculateCost() {
-  const model = document.getElementById("model")?.value || "gpt-5.3-codex standard";
-  const rates = pricing[model] || pricing["gpt-5.3-codex standard"];
+  const model = document.getElementById("model")?.value || "gpt-5.5 standard";
+  const rates = pricing[model] || pricing["gpt-5.5 standard"];
   const runs = numberValue("runs");
   const input = numberValue("inputTokens");
-  const cached = numberValue("cachedTokens");
+  const cached = Math.min(numberValue("cachedTokens"), input);
   const output = numberValue("outputTokens");
   const regularInput = Math.max(input - cached, 0);
   const perRun = ((regularInput * rates.input) + (cached * rates.cached) + (output * rates.output)) / 1_000_000;
   const daily = perRun * runs;
   const monthly = daily * 30;
   const cacheSavings = ((cached * rates.input) - (cached * rates.cached)) / 1_000_000 * runs;
+  const tokensPerDay = (input + output) * runs;
 
-  document.getElementById("perRunCost").textContent = formatMoney(perRun);
-  document.getElementById("dailyCost").textContent = formatMoney(daily);
-  document.getElementById("monthlyCost").textContent = formatMoney(monthly);
-  document.getElementById("cacheSavings").textContent = formatMoney(Math.max(cacheSavings, 0));
+  const values = {
+    perRunCost: formatMoney(perRun),
+    dailyCost: formatMoney(daily),
+    monthlyCost: formatMoney(monthly),
+    cacheSavings: formatMoney(Math.max(cacheSavings, 0)),
+    tokensPerDay: new Intl.NumberFormat("en-US").format(tokensPerDay)
+  };
+
+  Object.entries(values).forEach(([id, value]) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  });
+}
+
+function setupTheme() {
+  const stored = localStorage.getItem("theme");
+  const initial = stored || "dark";
+  document.documentElement.dataset.theme = initial;
+
+  const button = document.getElementById("themeToggle");
+  const label = document.getElementById("themeLabel");
+  const sync = () => {
+    const isLight = document.documentElement.dataset.theme === "light";
+    if (button) button.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
+    if (label) label.textContent = isLight ? "Light" : "Dark";
+    if (button) button.textContent = isLight ? "☀" : "☾";
+  };
+
+  if (button) {
+    button.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("theme", next);
+      sync();
+    });
+  }
+
+  sync();
 }
 
 function setupSearch() {
@@ -46,17 +85,25 @@ function setupSearch() {
 }
 
 function setupNavState() {
-  const links = Array.from(document.querySelectorAll(".nav-link[href^='#']"));
-  const sections = links
+  const currentPath = location.pathname.split("/").pop() || "index.html";
+  document.querySelectorAll(".nav-link,.nav-sub").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    if (href === currentPath || (currentPath === "" && href === "index.html")) {
+      link.classList.add("active");
+    }
+  });
+
+  const anchorLinks = Array.from(document.querySelectorAll(".nav-link[href^='#'],.nav-sub[href^='#']"));
+  const sections = anchorLinks
     .map((link) => document.querySelector(link.getAttribute("href")))
     .filter(Boolean);
 
   const update = () => {
     let current = sections[0]?.id;
     sections.forEach((section) => {
-      if (section.getBoundingClientRect().top < 160) current = section.id;
+      if (section.getBoundingClientRect().top < 170) current = section.id;
     });
-    links.forEach((link) => {
+    anchorLinks.forEach((link) => {
       link.classList.toggle("active", link.getAttribute("href") === `#${current}`);
     });
   };
@@ -65,10 +112,26 @@ function setupNavState() {
   update();
 }
 
+function setupTabs() {
+  const tabs = document.querySelectorAll("[data-tab]");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((node) => node.classList.remove("active"));
+      tab.classList.add("active");
+      const language = tab.dataset.tab;
+      document.querySelectorAll("[data-code]").forEach((panel) => {
+        panel.hidden = panel.dataset.code !== language;
+      });
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#model,#runs,#inputTokens,#cachedTokens,#outputTokens")
     .forEach((element) => element.addEventListener("input", calculateCost));
+  setupTheme();
   setupSearch();
   setupNavState();
+  setupTabs();
   calculateCost();
 });

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architecture | Codex Observability</title><link rel="stylesheet" href="assets/site.css"></head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">◆</span><span>Codex Observability</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Architecture</p><a class="nav-sub active" href="architecture-and-operations.html">Signal flow</a><a class="nav-sub" href="#signals">Signals</a><a class="nav-sub" href="#privacy">Privacy</a><a class="nav-sub" href="#operations">Operations</a></div></nav><div class="help-card"><strong>Design rule</strong><p>Keep local telemetry private, reproducible, and easy to tear down.</p></div></aside>
+      <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..."><span class="shortcut">⌘K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a><button id="themeToggle" class="icon-button" type="button">☾</button><button class="button version" type="button">v1.0⌄</button></div></header>
+        <div class="content article" data-search>
+          <h1>Architecture and Operations</h1>
+          <p class="lead">Codex emits OTLP signals to a local Collector. The Collector redacts selected attributes, batches records, and exports them to the LGTM backend.</p>
+          <div class="panel diagram"><div class="diagram-grid"><div class="diagram-col"><h3>Codex</h3><div class="diagram-node"><strong>CLI / Desktop</strong><span>Agent run</span></div></div><div class="diagram-node"><strong>OTLP</strong><span>:4318 logs, traces, metrics</span></div><div class="diagram-node"><strong>Collector</strong><span>redact and batch</span></div><div class="diagram-node"><strong>Storage</strong><span>Loki, Tempo, Prometheus</span></div><div class="diagram-node"><strong>Grafana</strong><span>query and visualize</span></div><div class="diagram-col"><h3>Builder</h3><div class="diagram-node"><strong>Playbooks</strong><span>debug and optimize</span></div></div></div></div>
+          <h2 id="signals">Signals</h2>
+          <div class="grid-3"><div class="article-card"><h3>Logs</h3><p>Event-level records such as websocket events, SSE completions, warnings, startup phases, and token-bearing completion records.</p></div><div class="article-card"><h3>Traces</h3><p>Execution spans that reveal latency inside Codex startup, session handling, model request flow, and tool/MCP operations.</p></div><div class="article-card"><h3>Metrics</h3><p>Collector health and Tempo-generated spanmetrics such as call rate and p95 latency.</p></div></div>
+          <h2 id="privacy">Privacy</h2>
+          <p>Codex is configured with <code>log_user_prompt = false</code>. The collector also drops identity and prompt-like attributes before storage.</p>
+          <pre>delete_key(attributes, "user_email")
+delete_key(attributes, "user_account_id")
+delete_key(attributes, "prompt")
+delete_key(attributes, "user_prompt")</pre>
+          <h2 id="operations">Operations</h2>
+          <table><thead><tr><th>Check</th><th>Command</th><th>Expected result</th></tr></thead><tbody><tr><td>Container</td><td><code>docker ps</code></td><td>codex-otel-lgtm healthy</td></tr><tr><td>Codex config</td><td><code>codex doctor</code></td><td>config parse ok</td></tr><tr><td>Grafana</td><td><code>/api/health</code></td><td>database ok</td></tr></tbody></table>
+        </div>
+      </main>
+    </div>
+    <script src="assets/site.js"></script>
+  </body>
+</html>
