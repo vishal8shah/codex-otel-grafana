@@ -69,6 +69,9 @@ counts, and safe enum-like values were retained locally in the gitignored
 | Backend | local `grafana/otel-lgtm`: Loki, Prometheus, and Tempo through the Grafana HTTP proxy |
 | Config path | user-level `%USERPROFILE%\.codex\config.toml` |
 | Prompt logging | `log_user_prompt = false` |
+| Logs exporter | `otlp-http` (`binary`) to `http://localhost:4318/v1/logs` |
+| Metrics exporter | `otlp-http` (`binary`) to `http://localhost:4318/v1/metrics` |
+| Trace exporter | `otlp-http` (`binary`) to `http://localhost:4318/v1/traces` |
 | Data isolation | Retained historical data was present. The fresh run was isolated by `env=schema-tool-discovery-20260618-131244` and a bounded UTC query window. |
 | Interaction | Non-sensitive smoke prompt plus one read-only `echo` shell tool call; the requested tool action did not read repository files |
 | Exit | clean PTY EOF, process exit status `0`, followed by exporter flush time |
