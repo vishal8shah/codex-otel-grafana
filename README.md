@@ -75,7 +75,8 @@ codex
 Start and stop are cross-platform in Phase 1. Dashboard provisioning is still
 PowerShell-based: macOS and Linux users need `pwsh` to run
 `observability/setup-codex-dashboards.ps1`. Cross-platform provisioning-as-code
-is planned for a future phase.
+through Grafana file-based provisioning in Docker Compose is planned for a
+future phase.
 
 ### Docker Compose directly
 

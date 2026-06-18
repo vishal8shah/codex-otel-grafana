@@ -42,4 +42,7 @@ fi
 
 echo
 echo "LGTM is bound to 127.0.0.1 only. Port overrides can be set in a local .env file."
+echo "This script starts LGTM only; dashboard provisioning remains PowerShell-based in Phase 1."
+echo "On macOS/Linux, install pwsh and run observability/setup-codex-dashboards.ps1."
+echo "Grafana file-based provisioning through Docker Compose is planned for a future phase."
 echo "Run scripts/doctor.sh, then use interactive 'codex' for telemetry validation."
