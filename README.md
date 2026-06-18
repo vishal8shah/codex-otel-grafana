@@ -32,7 +32,7 @@ It captures the setup we verified locally:
 - OTLP/gRPC receiver: localhost:4317
 - Local dashboards for logs, traces, Prometheus spanmetrics, and token economics
 - Collector-side redaction for user identity and prompt-like attributes
-- Reproducible PowerShell scripts for start, stop, and dashboard provisioning
+- Cross-platform start/stop scripts, plus PowerShell dashboard provisioning
 
 ## Dashboards
 
@@ -72,8 +72,10 @@ Windows users who need the original direct `docker run` path.
 codex
 ```
 
-Dashboard provisioning remains a PowerShell script and can be run with `pwsh`
-where PowerShell is installed.
+Start and stop are cross-platform in Phase 1. Dashboard provisioning is still
+PowerShell-based: macOS and Linux users need `pwsh` to run
+`observability/setup-codex-dashboards.ps1`. Cross-platform provisioning-as-code
+is planned for a future phase.
 
 ### Docker Compose directly
 
