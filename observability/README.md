@@ -19,6 +19,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex / Tempo Traces: http://localhost:3000/d/codex-tempo-traces/codex-tempo-traces
 - Codex / Prometheus Metrics: http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics
 - Codex / Token Economics: http://localhost:3000/d/codex-token-economics/codex-token-economics
+- Codex Stuck + Burn Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -64,6 +65,25 @@ pricing before budgeting.
 ```logql
 {service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"
 ```
+
+## Codex Stuck + Burn Triage
+
+The three-panel triage dashboard uses only `codex.run_health` derived logs from
+`tools/run-health/run_health.py`. It shows stuck candidates, tokens actually
+observed on incomplete runs, and a privacy-safe active/incomplete table.
+
+Raw run identifiers are hashed and dropped; Grafana receives `run_hash` only.
+The stuck state is a heuristic candidate, and no-completion token burn requires
+correlated observed token fields. No native `codex_*` metrics are created.
+
+```text
+python tools/run-health/run_health.py --dry-run
+python tools/run-health/run_health.py --emit-derived
+```
+
+Use `--window-minutes`, `--alive-threshold-seconds`, and
+`--stuck-threshold-seconds` to tune classification. The analyzer guide under
+`tools/run-health/README.md` documents the complete privacy and state model.
 
 ## Prerequisites
 

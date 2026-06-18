@@ -1,0 +1,112 @@
+import datetime as dt
+import importlib.util
+import pathlib
+import sys
+import unittest
+
+
+MODULE_PATH = pathlib.Path(__file__).parents[1] / "run_health.py"
+SPEC = importlib.util.spec_from_file_location("run_health", MODULE_PATH)
+run_health = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+sys.modules[SPEC.name] = run_health
+SPEC.loader.exec_module(run_health)
+
+
+NOW = dt.datetime(2026, 6, 18, 12, 0, tzinfo=dt.timezone.utc)
+
+
+def aggregate(*, quiet: int, meaningful: bool = True):
+    timestamp = NOW - dt.timedelta(seconds=quiet)
+    return run_health.RunAggregate(
+        run_hash="a" * 64,
+        first_seen=timestamp - dt.timedelta(minutes=5),
+        last_seen=timestamp,
+        last_event="codex.api_request" if meaningful else "unknown",
+        model="fixture-model",
+        event_count=2,
+        meaningful_activity=meaningful,
+    )
+
+
+def classify(run):
+    return run_health.classify_run(run, NOW, 120, 600, 360)
+
+
+class StateModelTests(unittest.TestCase):
+    def test_completed_recently(self):
+        run = aggregate(quiet=30)
+        run.completed = True
+        self.assertEqual(classify(run)["state"], run_health.COMPLETED_RECENTLY)
+
+    def test_slow_but_alive(self):
+        self.assertEqual(classify(aggregate(quiet=60))["state"], run_health.SLOW_BUT_ALIVE)
+
+    def test_stuck_candidate(self):
+        self.assertEqual(classify(aggregate(quiet=900))["state"], run_health.STUCK_CANDIDATE)
+
+    def test_no_completion_token_burn_requires_observed_tokens(self):
+        run = aggregate(quiet=30)
+        run.input_tokens = 100
+        run.output_tokens = 25
+        row = classify(run)
+        self.assertEqual(row["state"], run_health.NO_COMPLETION_TOKEN_BURN)
+        self.assertEqual(row["tokens_observed"], 125)
+
+    def test_unknown_incomplete(self):
+        self.assertEqual(
+            classify(aggregate(quiet=300, meaningful=False))["state"],
+            run_health.UNKNOWN_INCOMPLETE,
+        )
+
+    def test_hmac_hash_is_stable_and_does_not_reveal_input(self):
+        first = run_health.hash_run_identifier("fixture-run", "fixture-key")
+        second = run_health.hash_run_identifier("fixture-run", "fixture-key")
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 64)
+        self.assertNotIn("fixture-run", first)
+
+    def test_loki_input_is_allowlisted_and_source_labels_are_cleared(self):
+        labels = {
+            "conversation_id": "fixture-private-id",
+            "event_name": "codex.api_request",
+            "model": "fixture-model",
+            "arguments": "fixture-private-arguments",
+            "output": "fixture-private-output",
+            "user_email": "fixture@example.invalid",
+        }
+        response = {
+            "data": {
+                "result": [
+                    {
+                        "stream": labels,
+                        "values": [["1781784000000000000", "ignored raw log body"]],
+                    }
+                ]
+            }
+        }
+        events, count = run_health.safe_events_from_loki(response, "fixture-key")
+        self.assertEqual(count, 1)
+        self.assertEqual(labels, {})
+        self.assertEqual(
+            set(events[0]),
+            {
+                "run_hash",
+                "timestamp",
+                "event_name",
+                "event_kind",
+                "model",
+                *run_health.TOKEN_FIELDS,
+            },
+        )
+        self.assertNotIn("fixture-private-id", str(events))
+        self.assertNotIn("fixture-private-output", str(events))
+
+    def test_emission_rejects_non_log_endpoint(self):
+        payload = run_health.build_otlp_logs([], NOW)
+        with self.assertRaises(RuntimeError):
+            run_health.assert_log_only_emission("http://localhost:4318/v1/metrics", payload)
+
+
+if __name__ == "__main__":
+    unittest.main()

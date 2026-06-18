@@ -42,6 +42,29 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex / Tempo Traces](http://localhost:3000/d/codex-tempo-traces/codex-tempo-traces)
 - [Codex / Prometheus Metrics](http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics)
 - [Codex / Token Economics](http://localhost:3000/d/codex-token-economics/codex-token-economics)
+- [Codex Stuck + Burn Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
+
+## Codex Stuck + Burn Triage
+
+This focused derived analysis asks whether a run is still making progress or is
+a stuck candidate while observed token usage accumulates. It is not native
+Codex telemetry and emits no native `codex_*` metrics.
+
+The analyzer hashes the observed raw run identifier immediately and exposes
+only `run_hash`; raw identifiers are never written to output or Grafana.
+`STUCK_CANDIDATE` is a threshold-based heuristic, not proof.
+`NO_COMPLETION_TOKEN_BURN` requires actual correlated token fields and is never
+inferred from elapsed time.
+
+```text
+python tools/run-health/run_health.py --dry-run
+python tools/run-health/run_health.py --emit-derived
+```
+
+Tune the six-hour window and two-/ten-minute thresholds with
+`--window-minutes`, `--alive-threshold-seconds`, and
+`--stuck-threshold-seconds`. See [the analyzer guide](tools/run-health/README.md)
+for privacy, output and troubleshooting details.
 
 ## Quick Start
 

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 39,
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Stuck candidates now",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"STUCK_CANDIDATE\" [$__range]))",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto"
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "title": "Tokens observed on runs without completion",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(sum_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"NO_COMPLETION_TOKEN_BURN\" | unwrap tokens_observed [$__range]))",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto"
+      },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "Active / incomplete run triage",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 14 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=~\"SLOW_BUT_ALIVE|STUCK_CANDIDATE|NO_COMPLETION_TOKEN_BURN|UNKNOWN_INCOMPLETE\" | json",
+          "queryType": "range"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "Line", "format": "json", "replace": true, "keepTime": true }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "run_hash": 0,
+              "state": 1,
+              "first_seen": 2,
+              "last_seen": 3,
+              "age_seconds": 4,
+              "quiet_for_seconds": 5,
+              "completed": 6,
+              "tokens_observed": 7,
+              "last_event": 8,
+              "model": 9,
+              "notes": 10
+            }
+          }
+        }
+      ],
+      "options": { "showHeader": true },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "triage"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Stuck + Burn Triage",
+  "uid": "codex-stuck-burn-triage"
+}
