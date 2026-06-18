@@ -1,14 +1,13 @@
-# Codex Observability Kit
+# Codex Diagnostic Kit
 
-This repository documents and automates a local observability stack for OpenAI
-Codex on Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
+This repository provides a local-first diagnostic kit for OpenAI Codex on
+Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
 ## Positioning
 
-This project is local-first, privacy-first, and issue-led. Hosted and
-vendor-specific Codex OTel paths may exist; this repo focuses on local diagnosis
-of token burn, slow runs, stuck sessions, tool/MCP failures, signal health, and
-telemetry privacy.
+This project is local-first, privacy-first, and issue-led. It targets real
+classes of developer pain, but only ships diagnostics built from
+schema-confirmed fields and a reviewed privacy boundary.
 
 It is an evidence kit, not a claim that every useful Codex signal already
 exists. Field eligibility and known entrypoint limitations are tracked in
@@ -33,6 +32,8 @@ It captures the setup we verified locally:
 - Local dashboards for logs, traces, Prometheus spanmetrics, and token economics
 - Collector-side redaction for user identity and prompt-like attributes
 - Cross-platform start/stop and Grafana file-based dashboard provisioning
+- A proven Codex Stuck Triage panel and playbook backed by privacy-safe
+  `run_hash` values
 
 ## Dashboards
 
@@ -43,6 +44,20 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex / Prometheus Metrics](http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics)
 - [Codex / Token Economics](http://localhost:3000/d/codex-token-economics/codex-token-economics)
 - [Codex Stuck Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
+
+## Capability Matrix
+
+| Pain class | Status | Public claim |
+|---|---|---|
+| Codex goes quiet / appears stuck | **Shipped** | Codex Stuck Triage uses confirmed raw telemetry and privacy-safe `run_hash`. |
+| MCP/tool startup hangs | **Next** | Tool Failure Diagnosis is the next one-pain cycle. |
+| Tool dispatch uncertainty | **Backlog** | No shipped decision-without-result diagnostic yet. |
+| Review/resume flow stalls | **Acknowledged** | No claim until required signals are confirmed in `SCHEMA.md`. |
+| API/backend reliability | **Backlog** | Request evidence exists; a reliability diagnostic has not shipped. |
+| Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
+
+Token burn without completion was removed from Phase 2 because the required raw
+telemetry shape was not schema-backed. No native `codex_*` metrics are claimed.
 
 ## Codex Stuck Triage
 
@@ -66,15 +81,15 @@ Tune the six-hour window and two-/ten-minute thresholds with
 `--stuck-threshold-seconds`. See [the analyzer guide](tools/run-health/README.md)
 for privacy, output and troubleshooting details.
 
-### Stuck Playbook
+### Shipped Playbook
 
-- **Symptom:** Codex seems stuck or silent without a completed answer.
-- **Check:** open **Grafana > Codex Stuck Triage**.
-- **Meaning:** `STUCK_CANDIDATE` is a quiet-time heuristic, not proof;
-  `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
-  window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
-- **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and
-  time fields, then use safe Loki/Tempo context in the same time window.
+- **Symptom:** Codex appears quiet, incomplete, or possibly stuck.
+- **Panel:** **Codex Stuck Triage**.
+- **Meaning:** a privacy-safe derived record shows a run with no completion and
+  quiet time beyond the stuck threshold, based on confirmed raw telemetry.
+- **Next action:** inspect `run_hash`, `state`, `quiet_for_seconds`,
+  `last_event`, `model`, and the source time window. Treat it as a stuck
+  candidate, not proof of a Codex bug.
 
 `run_hash` is a privacy-safe hash of the source run identifier; the raw value is
 never shown. Derived `codex.run_health` records are not native Codex telemetry,
@@ -95,6 +110,7 @@ adding appropriate security controls.
 .\scripts\start.ps1 -Pull
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
+.\scripts\run-health.ps1
 codex
 ```
 
@@ -107,6 +123,7 @@ Windows users who need the original direct `docker run` path.
 ./scripts/start.sh --pull
 ./scripts/doctor.sh
 ./scripts/schema-verify.sh
+./scripts/run-health.sh
 codex
 ```
 
@@ -123,7 +140,9 @@ docker compose up -d
 docker compose ps
 ```
 
-Stop the stack with `scripts/stop.ps1`, `scripts/stop.sh`, or
+Emit derived Stuck Triage rows with `scripts/run-health.ps1 -EmitDerived` or
+`scripts/run-health.sh --emit-derived`. Stop the stack with
+`scripts/stop.ps1`, `scripts/stop.sh`, or
 `docker compose stop`. Pass `-Remove` or `--remove` to the wrapper scripts to
 remove the container and Compose network while preserving the named data
 volume. `LGTM_DATA_VOLUME` can select a separately named disposable volume for
@@ -190,7 +209,7 @@ GitHub Pages-ready documentation lives under `docs/`:
 - [Documentation Home](docs/index.html)
 - [Manual Rebuild Guide](docs/rebuild-guide.html)
 - [Architecture and Operations](docs/architecture-and-operations.html)
-- [Builder Metrics and Token Economics](docs/builder-metrics.html)
+- [Diagnostic Capability Status](docs/builder-metrics.html)
 - [Publishing to GitHub Pages](docs/publishing.html)
 
 Phase sequencing and the schema acceptance gate are documented in

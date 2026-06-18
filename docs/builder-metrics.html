@@ -1,26 +1,37 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Builder Metrics | Codex Observability</title><link rel="stylesheet" href="assets/site.css"></head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">◆</span><span>Codex Observability</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Builder Metrics</p><a class="nav-sub active" href="builder-metrics.html">Dashboards</a><a class="nav-sub" href="#token-economics">Token economics</a><a class="nav-sub" href="#playbooks">Playbooks</a><a class="nav-sub" href="#local-models">Local models</a></div></nav><div class="help-card"><strong>Value test</strong><p>A dashboard earns its place only if it shortens a debugging or cost decision.</p></div></aside>
-      <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..."><span class="shortcut">⌘K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a><button id="themeToggle" class="icon-button" type="button">☾</button><button class="button version" type="button">v1.0⌄</button></div></header>
-        <div class="content article" data-search>
-          <h1>Dashboards Builders Care About</h1>
-          <p class="lead">The stack is useful when it answers operational questions: what happened, where time went, what failed, how many tokens were used, and what the run likely cost.</p>
-          <h2 id="dashboards">Dashboard Jobs</h2>
-          <div class="grid-2"><div class="article-card"><h3>Loki Logs</h3><p>Best for event history, warnings, completion records, and trace IDs. Use it when the run succeeded but something looks off.</p></div><div class="article-card"><h3>Tempo Traces</h3><p>Best for latency. Use it when the run is slow and you need the exact bottleneck.</p></div><div class="article-card"><h3>Prometheus Metrics</h3><p>Best for proving ingestion health and monitoring spanmetric rate and latency.</p></div><div class="article-card"><h3>Token Economics</h3><p>Best for cost visibility. Use it when the workflow works but may not scale economically.</p></div></div>
-          <h2 id="token-economics">Token Economics and USD Panels</h2>
-          <p>The live Grafana dashboard now includes token counts and estimated USD panels. It uses Loki completion records and explicit pricing assumptions.</p>
-          <pre>{service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"</pre>
-          <div class="grid-2"><div class="article-card"><h3>Tracked tokens</h3><p>Input, cached input, output, reasoning, tool tokens, and completion count.</p></div><div class="article-card"><h3>Estimated dollars</h3><p>Total cost, input cost, output cost, cache savings, and cost trend. Defaults use gpt-5.5 standard pricing assumptions.</p></div></div>
-          <h2 id="playbooks">Realistic Playbooks</h2>
-          <table><thead><tr><th>Scenario</th><th>Dashboard</th><th>What it helps prove</th></tr></thead><tbody><tr><td>High error rate</td><td>Loki</td><td>Which event family is failing.</td></tr><tr><td>Slow run</td><td>Tempo</td><td>Whether the bottleneck is startup, tools, or model response.</td></tr><tr><td>Budget exceeded</td><td>Token Economics</td><td>Whether cost comes from repeated input, low cache reuse, or long output.</td></tr><tr><td>Empty dashboards</td><td>Prometheus</td><td>Whether the collector received telemetry at all.</td></tr></tbody></table>
-          <h2 id="local-models">Local Models</h2>
-          <p>Logs, traces, collector health, and spanmetrics should still help with Codex local providers because Codex emits the telemetry. Token economics depends on whether the provider returns token usage that Codex records. The calculator includes a local model preset with zero API token cost.</p>
-        </div>
-      </main>
-    </div>
-    <script src="assets/site.js"></script>
-  </body>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Diagnostic Status | Codex Diagnostic Kit</title><link rel="stylesheet" href="assets/site.css"></head>
+  <body><div class="app-shell">
+    <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">&#9670;</span><span>Codex Diagnostic Kit</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Evidence status</p><a class="nav-sub active" href="builder-metrics.html">Capability matrix</a><a class="nav-sub" href="#token-economics">Token economics</a><a class="nav-sub" href="#roadmap">Roadmap</a></div></nav><div class="help-card"><strong>Evidence rule</strong><p>A useful raw signal is not automatically a shipped diagnostic.</p></div></aside>
+    <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..." aria-label="Search docs"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
+      <div class="content article" data-search>
+        <p class="eyebrow">Issue-led diagnostics</p>
+        <h1>Capabilities, not decorative promises</h1>
+        <p class="lead">The kit targets real failure classes, but it promotes a diagnostic to shipped only after its source fields, privacy boundary, analyzer path, and dashboard behavior are proven.</p>
+
+        <h2 id="dashboards">Capability matrix</h2>
+        <table><thead><tr><th>Pain class</th><th>Status</th><th>Current claim</th></tr></thead><tbody>
+          <tr><td>Codex goes quiet / appears stuck</td><td><span class="status-badge shipped">Shipped</span></td><td>Codex Stuck Triage groups confirmed raw activity into privacy-safe derived run states.</td></tr>
+          <tr><td>MCP/tool startup hangs</td><td><span class="status-badge next">Next</span></td><td>Tool Failure Diagnosis will be the next one-pain cycle.</td></tr>
+          <tr><td>Tool dispatch uncertainty</td><td><span class="status-badge backlog">Backlog</span></td><td>No shipped decision-without-result diagnostic yet.</td></tr>
+          <tr><td>Review/resume flow stalls</td><td><span class="status-badge acknowledged">Acknowledged</span></td><td>No claim until the required signals are confirmed.</td></tr>
+          <tr><td>API/backend reliability</td><td><span class="status-badge backlog">Backlog</span></td><td>Request events are evidence inputs; a reliability diagnostic has not shipped.</td></tr>
+          <tr><td>Token/cost ambiguity</td><td><span class="status-badge partial">Partial</span></td><td>Completed-run token economics is distinct from token burn without completion.</td></tr>
+        </tbody></table>
+
+        <h2 id="stuck-triage">Shipped: Codex Stuck Triage</h2>
+        <div class="grid-2"><article class="article-card"><span class="status-badge proof">Proven panel</span><h3>Unique runs analyzed</h3><p>Counts unique <code>run_hash</code> values over the selected range, so repeated analyzer emissions do not inflate the stat.</p></article><article class="article-card"><span class="status-badge proof">Proven panel</span><h3>Runs with stuck-candidate records</h3><p>Counts unique hashes with a stuck-candidate record in the range. The snapshot table may contain repeated emissions.</p></article></div>
+
+        <h2 id="token-economics">Token economics is not token burn</h2>
+        <p>Confirmed token fields on completed <code>codex.sse_event</code> records can support completed-run economics after a local run. This site does not provide fixed model rates, default cost estimates, or decorative dollar totals.</p>
+        <p class="callout">Token burn without completion is not a shipped diagnostic. It was removed because the required non-completion token shape was not confirmed in <code>SCHEMA.md</code>.</p>
+
+        <h2 id="roadmap">Status-tagged roadmap</h2>
+        <div class="grid-2"><article class="article-card"><span class="status-badge next">Next</span><h3>Tool Failure Diagnosis</h3><p>Target only schema-confirmed tool decisions, results, names, outcomes, and durations where available.</p></article><article class="article-card"><span class="status-badge backlog">Backlog</span><h3>Later pain classes</h3><p>Tool dispatch, backend reliability, and review/resume stalls remain unbuilt until their evidence paths are proven.</p></article></div>
+
+        <h2>Shipped playbook</h2>
+        <table><thead><tr><th>Symptom</th><th>Panel</th><th>Meaning and action</th></tr></thead><tbody><tr><td>Codex appears quiet, incomplete, or possibly stuck.</td><td>Codex Stuck Triage</td><td>Inspect the privacy-safe hash, state, quiet time, last event, model, and source window. Treat the result as a candidate, not proof of a Codex bug.</td></tr></tbody></table>
+      </div>
+    </main>
+  </div><script src="assets/site.js"></script></body>
 </html>
