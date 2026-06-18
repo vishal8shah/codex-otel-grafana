@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 39,
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "version": 0,
+  "panels": [
+    {
+      "id": 4,
+      "title": "Unique runs analyzed",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" [$__range])))",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto"
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
+      "id": 1,
+      "title": "Runs with stuck-candidate records",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"STUCK_CANDIDATE\" [$__range])))",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto"
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "Incomplete run-health records",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 14 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=~\"SLOW_BUT_ALIVE|STUCK_CANDIDATE|UNKNOWN_INCOMPLETE\" | json",
+          "queryType": "range"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "Line", "format": "json", "replace": true, "keepTime": true }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "run_hash": 0,
+              "state": 1,
+              "first_seen": 2,
+              "last_seen": 3,
+              "age_seconds": 4,
+              "quiet_for_seconds": 5,
+              "completed": 6,
+              "last_event": 7,
+              "model": 8,
+              "notes": 9
+            }
+          }
+        }
+      ],
+      "options": { "showHeader": true },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "triage"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Stuck Triage",
+  "uid": "codex-stuck-burn-triage"
+}

@@ -6,6 +6,8 @@
 # Logs and temporary files
 *.log
 *.tmp
+*.py[cod]
+__pycache__/
 tmp/
 temp/
 
@@ -16,6 +18,7 @@ loki-data/
 tempo-data/
 prometheus-data/
 schema-observation-output/
+run-health-output/
 
 # OS/editor noise
 .DS_Store
