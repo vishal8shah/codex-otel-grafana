@@ -54,14 +54,20 @@ queries; they do not declare that a signal exists or is absent.
 
 ## 4. Observed Logs
 
-The following was observed in the existing local LGTM data on 2026-06-18. The
-inspection queried structured metadata and field names only; example values
-below are deliberately non-sensitive.
+Retained-data evidence note (2026-06-18): the local Loki backend was inspected
+on Windows 10 using the sanitized query
+`{service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"`.
+The records came from retained local LGTM data, not a fresh interactive run.
+The producing Codex version and entrypoint are unknown. Consequently, token
+field names from those records are not accepted as current-schema observations;
+they remain **Not tested locally for current schema** until reproduced with a
+version-stamped interactive `codex` session.
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
 |---|---|---|---|---|---|
+| `codex.conversation_starts` | Structured log event | Documented by official Codex docs; Not tested locally | `event_name=codex.conversation_starts` | Only after local observation | Do not query or classify this as a native metric. |
 | Completion event | Loki log | Observed locally | `event_name=codex.sse_event`, `event_kind=response.completed` | Yes | Primary token record selector. |
-| Token counts | Completion log | Observed locally | `input_token_count`, `output_token_count`, `cached_token_count`, `reasoning_token_count`, `tool_token_count` | Yes, aggregate only | Expected in logs, not Prometheus metrics unless later verified. |
+| Token counts | Completion log | Not tested locally for current schema | `input_token_count`, `output_token_count`, `cached_token_count`, `reasoning_token_count`, `tool_token_count` | No, until locally validated | Official docs describe token counts on `codex.sse_event` / `response.completed`, but these field names must be reproduced with interactive `codex` before Token FinOps dashboards rely on them. Retained records had unknown producer version and entrypoint. |
 | Model | Completion log | Observed locally | `model=<model-id>` | Yes, with cardinality review | Do not infer pricing from the model name alone. |
 | Duration | Codex log metadata | Observed locally | `duration_ms=<number>` | Yes, after event scoping | Meaning depends on the associated event. |
 | HTTP result | Codex log metadata | Observed locally | `http_response_status_code=<code>`, `success=<boolean>` | Yes | Scope to a verified event before interpreting. |
@@ -69,6 +75,11 @@ below are deliberately non-sensitive.
 | Prompt and identity fields | Historical local data | Observed locally; unsafe by default | `prompt`, `user_email`, `user_account_id` | No | Their historical presence proves the need for redaction. Current config must keep `log_user_prompt=false`; old retained data may predate redaction. |
 | `codex.tool_decision` | Loki log | Not tested | `event_name=codex.tool_decision` | Only after observation | Run an interactive tool-use test. |
 | `codex.tool_result` | Loki log | Not tested | `event_name=codex.tool_result` | Only after observation | Run an interactive tool-use test. |
+
+Retained LGTM volumes can preserve telemetry that predates the current
+redaction policy. Purge or reset that retained data before screenshots, public
+demos, or sharing the local Grafana state if older records may contain prompt
+or identity-like attributes.
 
 ## 5. Observed Metrics
 
@@ -78,8 +89,14 @@ native Codex metric emission. Full verification must use interactive `codex`.
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
 |---|---|---|---|---|---|
-| `codex.conversation_starts` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Prometheus may normalize dots to underscores. Discover the actual stored name. |
 | `codex.api_request` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Validate labels and unit interactively. |
+| `codex.api_request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
+| `codex.sse_event` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | This metric family is distinct from the structured log event of the same name. |
+| `codex.sse_event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
+| `codex.websocket.request` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Discover the normalized Prometheus name and labels. |
+| `codex.websocket.request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
+| `codex.websocket.event` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Discover the normalized Prometheus name and labels. |
+| `codex.websocket.event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
 | `codex.tool.call` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Do not equate with `codex mcp-server`. |
 | `codex.tool.call.duration_ms` | Native Codex histogram | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm buckets, unit, and labels. |
 | `traces_spanmetrics_*` | Collector-derived metric | Derived signal | Calls and latency from spans | Yes, marked derived | Not evidence that Codex emitted native metrics. |
@@ -161,6 +178,7 @@ Approved seeds for that future verification work are `openai/codex#5085`,
 - [ ] Query Prometheus for actual native Codex metric names and labels.
 - [ ] Query Tempo for sanitized span names and attribute keys.
 - [ ] Confirm raw prompts, messages, emails, account IDs, and paths are absent.
+- [ ] Purge or reset retained LGTM data that predates current redaction before screenshots, public demos, or sharing local Grafana state.
 - [ ] Record unknowns as **Not tested**, not **Not observed**.
 - [ ] Review and accept this ledger before building advanced dashboards.
 

@@ -58,15 +58,23 @@ Manual discovery procedure:
 5. Wait briefly, then run the queries below in Grafana Explore.
 
 Loki query hints (field existence must be confirmed from returned records):
+  {service_name="Codex Desktop"} | event_name="codex.conversation_starts"
   {service_name="Codex Desktop"} | event_name="codex.sse_event"
   {service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"
   {service_name="Codex Desktop"} | event_name="codex.tool_decision"
   {service_name="Codex Desktop"} | event_name="codex.tool_result"
 
-Prometheus query hints (OTLP names may be normalized; use the metric browser):
-  {__name__=~"codex_.*"}
-  codex_conversation_starts_total
+Prometheus candidate hints (OTLP names may be normalized; verify every stored
+name through the metric browser before recording it as observed):
+  {__name__=~"codex_(api_request|sse_event|websocket_request|websocket_event|tool_call).*"}
   codex_api_request_total
+  codex_api_request_duration_ms_bucket
+  codex_sse_event_total
+  codex_sse_event_duration_ms_bucket
+  codex_websocket_request_total
+  codex_websocket_request_duration_ms_bucket
+  codex_websocket_event_total
+  codex_websocket_event_duration_ms_bucket
   codex_tool_call_total
   codex_tool_call_duration_ms_bucket
 
@@ -74,10 +82,16 @@ Tempo TraceQL query hints:
   { resource.service.name = "Codex Desktop" }
   { resource.service.name = "Codex Desktop" && name = "codex.tool.call" }
 
-Terms to verify, not assume:
-  codex.conversation_starts, codex.api_request, codex.sse_event,
-  response.completed, codex.tool_decision, codex.tool_result,
-  codex.tool.call, codex.tool.call.duration_ms
+Structured log terms to verify, not assume:
+  codex.conversation_starts, codex.sse_event, response.completed,
+  codex.tool_decision, codex.tool_result
+
+Native metric families to verify, not assume:
+  codex.api_request, codex.api_request.duration_ms, codex.sse_event,
+  codex.sse_event.duration_ms, codex.websocket.request,
+  codex.websocket.request.duration_ms, codex.websocket.event,
+  codex.websocket.event.duration_ms, codex.tool.call,
+  codex.tool.call.duration_ms
 
 Record sanitized evidence manually in SCHEMA.md. A metrics result obtained with
 codex exec is invalid for full schema verification.
