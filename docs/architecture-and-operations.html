@@ -1,27 +1,33 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architecture | Codex Observability</title><link rel="stylesheet" href="assets/site.css"></head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">◆</span><span>Codex Observability</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">↗</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Architecture</p><a class="nav-sub active" href="architecture-and-operations.html">Signal flow</a><a class="nav-sub" href="#signals">Signals</a><a class="nav-sub" href="#privacy">Privacy</a><a class="nav-sub" href="#operations">Operations</a></div></nav><div class="help-card"><strong>Design rule</strong><p>Keep local telemetry private, reproducible, and easy to tear down.</p></div></aside>
-      <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..."><span class="shortcut">⌘K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub ↗</a><button id="themeToggle" class="icon-button" type="button">☾</button><button class="button version" type="button">v1.0⌄</button></div></header>
-        <div class="content article" data-search>
-          <h1>Architecture and Operations</h1>
-          <p class="lead">Codex emits OTLP signals to a local Collector. The Collector redacts selected attributes, batches records, and exports them to the LGTM backend.</p>
-          <div class="panel diagram"><div class="diagram-grid"><div class="diagram-col"><h3>Codex</h3><div class="diagram-node"><strong>CLI / Desktop</strong><span>Agent run</span></div></div><div class="diagram-node"><strong>OTLP</strong><span>:4318 logs, traces, metrics</span></div><div class="diagram-node"><strong>Collector</strong><span>redact and batch</span></div><div class="diagram-node"><strong>Storage</strong><span>Loki, Tempo, Prometheus</span></div><div class="diagram-node"><strong>Grafana</strong><span>query and visualize</span></div><div class="diagram-col"><h3>Builder</h3><div class="diagram-node"><strong>Playbooks</strong><span>debug and optimize</span></div></div></div></div>
-          <h2 id="signals">Signals</h2>
-          <div class="grid-3"><div class="article-card"><h3>Logs</h3><p>Event-level records such as websocket events, SSE completions, warnings, startup phases, and token-bearing completion records.</p></div><div class="article-card"><h3>Traces</h3><p>Execution spans that reveal latency inside Codex startup, session handling, model request flow, and tool/MCP operations.</p></div><div class="article-card"><h3>Metrics</h3><p>Collector health and Tempo-generated spanmetrics such as call rate and p95 latency.</p></div></div>
-          <h2 id="privacy">Privacy</h2>
-          <p>Codex is configured with <code>log_user_prompt = false</code>. The collector also drops identity and prompt-like attributes before storage.</p>
-          <pre>delete_key(attributes, "user_email")
-delete_key(attributes, "user_account_id")
-delete_key(attributes, "prompt")
-delete_key(attributes, "user_prompt")</pre>
-          <h2 id="operations">Operations</h2>
-          <table><thead><tr><th>Check</th><th>Command</th><th>Expected result</th></tr></thead><tbody><tr><td>Container</td><td><code>docker ps</code></td><td>codex-otel-lgtm healthy</td></tr><tr><td>Codex config</td><td><code>codex doctor</code></td><td>config parse ok</td></tr><tr><td>Grafana</td><td><code>/api/health</code></td><td>database ok</td></tr></tbody></table>
-        </div>
-      </main>
-    </div>
-    <script src="assets/site.js"></script>
-  </body>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architecture | Codex Diagnostic Kit</title><link rel="stylesheet" href="assets/site.css"></head>
+  <body><div class="app-shell">
+    <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">&#9670;</span><span>Codex Diagnostic Kit</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Architecture</p><a class="nav-sub active" href="architecture-and-operations.html">Signal flow</a><a class="nav-sub" href="#derived">Derived evidence</a><a class="nav-sub" href="#privacy">Privacy</a><a class="nav-sub" href="#operations">Operations</a></div></nav><div class="help-card"><strong>Design rule</strong><p>Confirmed raw telemetry in; explicitly derived, privacy-safe evidence out.</p></div></aside>
+    <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..." aria-label="Search docs"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
+      <div class="content article" data-search>
+        <p class="eyebrow">Local evidence path</p><h1>Architecture and operations</h1>
+        <p class="lead">Codex emits OTLP signals to a local Collector. The Collector applies redaction and routing before Loki, Tempo, metrics storage, and Grafana. Diagnostics are added only when the relevant fields are confirmed.</p>
+        <div class="panel diagram"><div class="diagram-grid"><div class="diagram-col"><h3>Codex</h3><div class="diagram-node"><strong>CLI / Desktop</strong><span>Raw OTLP signals</span></div></div><div class="diagram-node"><strong>Collector</strong><span>Redact, batch, route</span></div><div class="diagram-node"><strong>LGTM</strong><span>Loki, Tempo, metrics storage</span></div><div class="diagram-node"><strong>Analyzer</strong><span>Hash and classify confirmed fields</span></div><div class="diagram-node"><strong>Grafana</strong><span>Provisioned evidence views</span></div><div class="diagram-col"><h3>Builder</h3><div class="diagram-node"><strong>Playbook</strong><span>Candidate, context, next action</span></div></div></div></div>
+
+        <h2 id="signals">Signal roles</h2>
+        <div class="grid-3"><article class="article-card"><h3>Logs</h3><p>Confirmed event records provide completion, activity, model, tool, and timing evidence where recorded.</p></article><article class="article-card"><h3>Traces</h3><p>Observed spans provide execution context. A trace attribute is not joined to a run unless that correlation is proven safe.</p></article><article class="article-card"><h3>Metrics</h3><p>Collector health and derived spanmetrics verify pipeline behavior. They are not native <code>codex_*</code> metrics.</p></article></div>
+
+        <h2 id="derived">Codex Stuck Triage derivation</h2>
+        <p>Raw records are grouped using a hash of the source conversation identifier. The raw identifier is discarded; derived <code>codex.run_health</code> rows expose only <code>run_hash</code>, state, safe timing, model, last event, and explanatory fields.</p>
+        <pre>schema-confirmed Codex logs
+  -> hash source identifier
+  -> classify completion and quiet-time evidence
+  -> emit derived codex.run_health
+  -> query unique run_hash values in Grafana</pre>
+        <p class="callout">A stuck state is a heuristic candidate. It does not prove a Codex product bug and does not claim to fix one.</p>
+
+        <h2 id="privacy">Privacy boundary</h2>
+        <p>Prompt logging is disabled. The collector drops known identity and prompt-like attributes, and the analyzer uses an allowlist before emitting derived records.</p>
+        <div class="grid-2"><article class="article-card"><h3>Never expose</h3><p>Raw prompts, identities, conversation identifiers, local paths, tool arguments, and tool output.</p></article><article class="article-card"><h3>Safe diagnostic fields</h3><p>Privacy-safe run hash, derived state, quiet time, last event, model, and bounded source window.</p></article></div>
+
+        <h2 id="operations">Operations</h2>
+        <table><thead><tr><th>Check</th><th>Command</th><th>Expected result</th></tr></thead><tbody><tr><td>Compose stack</td><td><code>docker compose ps</code></td><td>LGTM service healthy</td></tr><tr><td>Setup health</td><td><code>scripts/doctor.ps1</code> or <code>scripts/doctor.sh</code></td><td>Required local endpoints reachable</td></tr><tr><td>Grafana</td><td><code>http://localhost:3000/api/health</code></td><td>Database healthy</td></tr><tr><td>Stuck analyzer</td><td><code>scripts/run-health.ps1</code> or <code>scripts/run-health.sh</code></td><td>Privacy-safe summary</td></tr></tbody></table>
+      </div>
+    </main>
+  </div><script src="assets/site.js"></script></body>
 </html>

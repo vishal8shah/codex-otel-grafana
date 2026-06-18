@@ -1,19 +1,25 @@
 # Delivery Phases
 
-1. **Phase 0: schema discovery and known constraints**
-   Establish observed fields, entrypoint limitations, privacy boundaries,
-   connectivity checks, and a safe notify design.
-2. **Phase 1: cross-platform setup and provisioning**
-   Make local stack installation and configuration reproducible.
-3. **Phase 2: synthetic telemetry**
-   Add clearly labeled test data only after the real schema is accepted.
-4. **Phase 3: Token FinOps and Tool Reliability dashboards**
-   Build panels exclusively from eligible fields in `SCHEMA.md`.
-5. **Phase 4: Stuck Session and Slow Run dashboards**
-   Add state and latency views after their source signals are verified.
-6. **Phase 5: issue-led scenario docs and playbooks**
-   Map verified public issues to Direct, Partial, Adjacent, or Not observable
-   support claims.
+1. **Phase 0: schema evidence — shipped**
+   Established observed fields, entrypoint limitations, privacy boundaries,
+   connectivity checks, and explicit unknowns.
+2. **Phase 1: local LGTM setup — shipped**
+   Made local stack installation and configuration reproducible across Windows,
+   macOS, and Linux.
+3. **Phase 1b: file-provisioned dashboards — shipped**
+   Added repository-owned Grafana datasource and dashboard provisioning.
+4. **Phase 2: Codex Stuck Triage — shipped**
+   Added one privacy-safe, issue-led diagnostic using confirmed raw telemetry,
+   derived `codex.run_health`, and unique `run_hash` stat counting.
 
-**Gate:** Do not build advanced dashboards before `SCHEMA.md` is reviewed and
-accepted.
+## Next One-Pain Cycle
+
+**Tool Failure Diagnosis** is next. It must use only eligible fields recorded in
+`SCHEMA.md`, preserve the privacy boundary, and prove the analyzer-to-dashboard
+path before making a shipped claim.
+
+Token burn without completion is not part of Phase 2. It was removed because
+the required source shape was not schema-backed.
+
+**Gate:** one pain per cycle. Do not promote backlog diagnostics until their
+source fields and end-to-end evidence path are confirmed.
