@@ -1,7 +1,7 @@
 # Codex Observability Kit
 
 This repository documents and automates a local observability stack for OpenAI
-Codex on Windows using Docker Desktop and `grafana/otel-lgtm`.
+Codex on Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
 ## Positioning
 
@@ -32,7 +32,7 @@ It captures the setup we verified locally:
 - OTLP/gRPC receiver: localhost:4317
 - Local dashboards for logs, traces, Prometheus spanmetrics, and token economics
 - Collector-side redaction for user identity and prompt-like attributes
-- Reproducible PowerShell scripts for start, stop, and dashboard provisioning
+- Cross-platform start/stop scripts, plus PowerShell dashboard provisioning
 
 ## Dashboards
 
@@ -45,16 +45,60 @@ After setup, open Grafana with `admin` / `admin`:
 
 ## Quick Start
 
+Copy `.env.example` to `.env` only if you need to change the safe local
+defaults. The Compose configuration publishes Grafana and both OTLP receivers
+on `127.0.0.1`; do not change these bindings to a public interface without
+adding appropriate security controls.
+
+### Windows PowerShell
+
 ```powershell
-.\observability\start-lgtm.ps1 -Pull
+.\scripts\start.ps1 -Pull
 .\observability\setup-codex-dashboards.ps1
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
 codex
 ```
 
+The existing `observability\start-lgtm.ps1` workflow remains available for
+Windows users who need the original direct `docker run` path.
+
+### macOS or Linux
+
+```bash
+./scripts/start.sh --pull
+./scripts/doctor.sh
+./scripts/schema-verify.sh
+codex
+```
+
+Start and stop are cross-platform in Phase 1. Dashboard provisioning is still
+PowerShell-based: macOS and Linux users need `pwsh` to run
+`observability/setup-codex-dashboards.ps1`. Cross-platform provisioning-as-code
+through Grafana file-based provisioning in Docker Compose is planned for a
+future phase.
+
+### Docker Compose directly
+
+```text
+docker compose config
+docker compose up -d
+docker compose ps
+```
+
+Stop the stack with `scripts/stop.ps1`, `scripts/stop.sh`, or
+`docker compose stop`. Pass `-Remove` or `--remove` to the wrapper scripts to
+remove the container and Compose network while preserving the named data
+volume. Phase 1 keeps the existing `grafana/otel-lgtm:latest` behavior; future
+hardening should pin and deliberately update a tested image tag.
+
 Submit a tiny non-sensitive prompt in the interactive session, exit cleanly,
 then verify the data in Grafana Explore. The schema verifier prints query hints.
+
+**Validation warning:** do not use `codex exec` to validate metrics. Phase 0b
+tested native `codex_*` Prometheus metrics with interactive Codex but did not
+observe them in this stack. Unless later evidence establishes those metrics,
+dashboards should rely on observed Loki logs and Tempo traces.
 
 ```logql
 {service_name="Codex Desktop"}
@@ -125,3 +169,7 @@ diagnose, detect, explain, reproduce, or gather evidence.
 This is a local development and diagnostics setup. It is not a production
 observability deployment. Do not expose Grafana or OTLP ports publicly without
 authentication, TLS, network controls, and a reviewed retention/redaction policy.
+
+For lightweight validation after setup, run `docker compose config`, the
+platform doctor and schema verifier, and then inspect Loki and Tempo after one
+small non-sensitive interactive Codex prompt.
