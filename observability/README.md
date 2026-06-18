@@ -68,9 +68,10 @@ pricing before budgeting.
 
 ## Codex Stuck + Burn Triage
 
-The three-panel triage dashboard uses only `codex.run_health` derived logs from
+The focused triage dashboard uses only `codex.run_health` derived logs from
 `tools/run-health/run_health.py`. It shows stuck candidates, tokens actually
-observed on incomplete runs, and a privacy-safe active/incomplete table.
+observed on incomplete runs, runs analyzed, and a privacy-safe
+active/incomplete table.
 
 Raw run identifiers are hashed and dropped; Grafana receives `run_hash` only.
 The stuck state is a heuristic candidate, and no-completion token burn requires
@@ -84,6 +85,23 @@ python tools/run-health/run_health.py --emit-derived
 Use `--window-minutes`, `--alive-threshold-seconds`, and
 `--stuck-threshold-seconds` to tune classification. The analyzer guide under
 `tools/run-health/README.md` documents the complete privacy and state model.
+
+### Stuck + Burn Playbook
+
+- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
+- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Meaning:** `STUCK_CANDIDATE` is a quiet-time heuristic, not proof;
+  `NO_COMPLETION_TOKEN_BURN` has correlated observed tokens without completion;
+  `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
+  window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
+- **Action:** use `run_hash`, `last_event`, `quiet_for_seconds`, and
+  `tokens_observed`, then inspect safe Loki/Tempo context in the same time
+  window without exposing the raw identifier.
+
+`run_hash` is a privacy-safe hash of the source run identifier; the raw value is
+never shown. The `codex.run_health` rows are derived rather than native Codex
+telemetry, and no native `codex_*` metrics are used. An empty incomplete table
+is healthy when **Runs analyzed** is non-zero and both problem stats are zero.
 
 ## Prerequisites
 

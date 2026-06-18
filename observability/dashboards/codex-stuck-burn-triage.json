@@ -5,10 +5,30 @@
   "version": 0,
   "panels": [
     {
+      "id": 4,
+      "title": "Runs analyzed",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" [$__range]))",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto"
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
       "id": 1,
       "title": "Stuck candidates now",
       "type": "stat",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 5 },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -28,7 +48,7 @@
       "id": 2,
       "title": "Tokens observed on runs without completion",
       "type": "stat",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 5 },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {

@@ -48,6 +48,35 @@ Emit derived logs for the Grafana dashboard:
 python tools/run-health/run_health.py --emit-derived
 ```
 
+## Minimal Validation Trigger
+
+The validation trigger emits only four fake Codex-like source log records
+through the real OTLP logs receiver: one stuck-candidate run and one
+no-completion token-burn run. It does not emit `codex.run_health` rows or any
+metrics. The analyzer must consume the source records and produce the derived
+rows.
+
+```text
+python tools/run-health/synthetic_trigger.py --scenario stuck-candidate
+python tools/run-health/synthetic_trigger.py --scenario no-completion-token-burn
+python tools/run-health/run_health.py --emit-derived \
+  --env-filter synthetic-stuck-burn-phase2
+```
+
+The trigger generates ephemeral fake identifiers in memory and never prints
+them. It emits no prompts, identities, paths, tool arguments or tool output.
+This is feature-validation support, not a generic telemetry generator.
+
+Thin wrappers provide dry-run/explain mode by default and accept analyzer
+arguments after the mode flag:
+
+```text
+.\scripts\run-health.ps1
+.\scripts\run-health.ps1 -EmitDerived
+./scripts/run-health.sh
+./scripts/run-health.sh --emit-derived
+```
+
 The normal run uses the observed `Codex Desktop` service name. Override it with
 `--service-name` or `CODEX_SERVICE_NAME` when the local Codex resource uses a
 different safe service label.
@@ -107,6 +136,24 @@ The derived event is named `codex.run_health`, uses service name
 - **Dashboard empty:** run once with `--emit-derived`, allow the collector to
   flush, and query `{service_name="Codex Run Health"}` in Loki Explore.
 - **401 from Grafana:** set `GRAFANA_USER` and `GRAFANA_PASSWORD`.
+
+## Stuck + Burn Playbook
+
+- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
+- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Meaning:** `STUCK_CANDIDATE` means meaningful activity went quiet beyond
+  the threshold and is a heuristic, not proof; `NO_COMPLETION_TOKEN_BURN`
+  means correlated token fields were observed without completion;
+  `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
+  window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
+- **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and
+  `tokens_observed`, then check safe Loki/Tempo context around the same
+  `run_hash` and time window. Never pivot to or expose the raw identifier.
+
+`run_hash` is a privacy-safe hash of the source run identifier; the raw value is
+never shown. Derived `codex.run_health` records are not native Codex telemetry,
+and no native `codex_*` metrics are used. An empty incomplete table is healthy
+when **Runs analyzed** is non-zero and both problem stats are zero.
 
 ## Limitations
 

@@ -57,14 +57,32 @@ only `run_hash`; raw identifiers are never written to output or Grafana.
 inferred from elapsed time.
 
 ```text
-python tools/run-health/run_health.py --dry-run
-python tools/run-health/run_health.py --emit-derived
+.\scripts\run-health.ps1
+.\scripts\run-health.ps1 -EmitDerived
+./scripts/run-health.sh
+./scripts/run-health.sh --emit-derived
 ```
 
 Tune the six-hour window and two-/ten-minute thresholds with
 `--window-minutes`, `--alive-threshold-seconds`, and
 `--stuck-threshold-seconds`. See [the analyzer guide](tools/run-health/README.md)
 for privacy, output and troubleshooting details.
+
+### Stuck + Burn Playbook
+
+- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
+- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Meaning:** `STUCK_CANDIDATE` is a quiet-time heuristic, not proof;
+  `NO_COMPLETION_TOKEN_BURN` has correlated observed tokens without completion;
+  `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
+  window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
+- **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and
+  `tokens_observed`, then use safe Loki/Tempo context in the same time window.
+
+`run_hash` is a privacy-safe hash of the source run identifier; the raw value is
+never shown. Derived `codex.run_health` records are not native Codex telemetry,
+and this feature emits no native `codex_*` metrics. An empty incomplete table is
+healthy when **Runs analyzed** is non-zero and both problem stats are zero.
 
 ## Quick Start
 

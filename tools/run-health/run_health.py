@@ -371,6 +371,67 @@ def write_output(rows: list[dict[str, Any]], output_path: str) -> None:
     path.write_text(json.dumps(rows, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def format_summary(rows: list[dict[str, Any]], window_minutes: int) -> str:
+    counts = {
+        state: sum(1 for row in rows if row["state"] == state)
+        for state in (
+            COMPLETED_RECENTLY,
+            SLOW_BUT_ALIVE,
+            STUCK_CANDIDATE,
+            NO_COMPLETION_TOKEN_BURN,
+            UNKNOWN_INCOMPLETE,
+        )
+    }
+    incomplete_tokens = sum(
+        row["tokens_observed"] for row in rows if row["state"] != COMPLETED_RECENTLY
+    )
+    lines = [
+        "Codex Stuck + Burn Triage",
+        "",
+        f"Analysis window: last {window_minutes} minutes",
+        f"Runs analyzed: {len(rows)}",
+        f"Completed recently: {counts[COMPLETED_RECENTLY]}",
+        f"Slow but alive: {counts[SLOW_BUT_ALIVE]}",
+        f"Stuck candidates: {counts[STUCK_CANDIDATE]}",
+        f"No-completion token burn: {counts[NO_COMPLETION_TOKEN_BURN]}",
+        f"Unknown incomplete: {counts[UNKNOWN_INCOMPLETE]}",
+        f"Tokens observed on incomplete/no-completion runs: {incomplete_tokens}",
+    ]
+
+    urgent_states = {STUCK_CANDIDATE, NO_COMPLETION_TOKEN_BURN, UNKNOWN_INCOMPLETE}
+    urgent = sorted(
+        (row for row in rows if row["state"] in urgent_states),
+        key=lambda row: (row["state"] != STUCK_CANDIDATE, -row["quiet_for_seconds"]),
+    )[:5]
+    if urgent:
+        lines.extend(["", "Top urgent rows:"])
+        lines.extend(
+            f"- {row['state']} run_hash={row['run_hash']} "
+            f"quiet_for_seconds={row['quiet_for_seconds']}"
+            for row in urgent
+        )
+
+    if rows and counts[COMPLETED_RECENTLY] == len(rows):
+        lines.extend(
+            [
+                "",
+                "Healthy outcome:",
+                "No stuck or incomplete runs were found in this analysis window.",
+                "If the Grafana triage table is empty, that means there are no active "
+                "incomplete runs to show.",
+            ]
+        )
+    elif not rows:
+        lines.extend(
+            [
+                "",
+                "No runs were found in this analysis window.",
+                "Check the selected service, environment filter, time range, and OTLP pipeline.",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Classify privacy-safe Codex stuck/burn candidates from local Loki logs."
@@ -439,7 +500,7 @@ def main(argv: list[str] | None = None) -> int:
             write_output(rows, args.output_json)
         if args.emit_derived:
             emit_derived(rows, args.otlp_logs_url)
-        print(json.dumps(rows, indent=2, sort_keys=True))
+        print(format_summary(rows, args.window_minutes))
         return 0
     except (RuntimeError, ValueError, json.JSONDecodeError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
