@@ -1,7 +1,19 @@
-# Local OpenTelemetry and Grafana for Codex
+# Codex Observability Kit
 
 This repository documents and automates a local observability stack for OpenAI
 Codex on Windows using Docker Desktop and `grafana/otel-lgtm`.
+
+## Positioning
+
+This project is local-first, privacy-first, and issue-led. Hosted and
+vendor-specific Codex OTel paths may exist; this repo focuses on local diagnosis
+of token burn, slow runs, stuck sessions, tool/MCP failures, signal health, and
+telemetry privacy.
+
+It is an evidence kit, not a claim that every useful Codex signal already
+exists. Field eligibility and known entrypoint limitations are tracked in
+[SCHEMA.md](SCHEMA.md). **Do not use `codex exec` to validate OTel metrics. Use
+interactive `codex` for full schema discovery.**
 
 It captures the setup we verified locally:
 
@@ -36,11 +48,13 @@ After setup, open Grafana with `admin` / `admin`:
 ```powershell
 .\observability\start-lgtm.ps1 -Pull
 .\observability\setup-codex-dashboards.ps1
-codex doctor
-codex exec "Say only: otel smoke test"
+.\scripts\doctor.ps1
+.\scripts\schema-verify.ps1
+codex
 ```
 
-Then verify the data in Grafana Explore:
+Submit a tiny non-sensitive prompt in the interactive session, exit cleanly,
+then verify the data in Grafana Explore. The schema verifier prints query hints.
 
 ```logql
 {service_name="Codex Desktop"}
@@ -86,6 +100,14 @@ GitHub Pages-ready documentation lives under `docs/`:
 - [Architecture and Operations](docs/architecture-and-operations.html)
 - [Builder Metrics and Token Economics](docs/builder-metrics.html)
 - [Publishing to GitHub Pages](docs/publishing.html)
+
+Phase sequencing and the schema acceptance gate are documented in
+[PHASES.md](PHASES.md).
+
+Future issue-led scenarios must reference verified issues, use the support
+labels `Direct`, `Partial`, `Adjacent`, or `Not observable`, and avoid claiming
+that this kit fixes Codex product bugs. Benefits should be phrased as helping to
+diagnose, detect, explain, reproduce, or gather evidence.
 
 ## Source References
 
