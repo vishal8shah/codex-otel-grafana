@@ -31,9 +31,10 @@ To recreate or refresh the dashboards:
 ```
 
 The Prometheus dashboard uses collector ingress metrics and Tempo-generated
-spanmetrics. Codex `0.139.0` sends OTLP metric points, but this local LGTM stack
-does not currently expose separate `codex_*` application metric names in
-Prometheus.
+spanmetrics. Phase 0b tested native `codex_*` Prometheus metrics with interactive
+Codex `0.139.0`, but did not observe them in this local LGTM stack. Dashboards
+should rely on the observed Loki logs and Tempo traces unless native metrics are
+later observed.
 
 The token economics dashboard uses Loki completion records and includes estimated
 USD panels for total cost, input cost, output cost, cache savings, and cost
@@ -131,11 +132,15 @@ Test-NetConnection localhost -Port 4318
 Invoke-WebRequest http://localhost:3000 -UseBasicParsing
 ```
 
-Then run a small Codex CLI command to emit telemetry:
+Then launch an interactive Codex CLI session and submit a small, non-sensitive
+prompt to emit telemetry:
 
 ```powershell
-codex exec "Say only: otel smoke test"
+codex
 ```
+
+Do not use `codex exec` for metrics validation; Phase 0b's discovery evidence is
+based on the interactive entrypoint.
 
 Open Grafana at http://localhost:3000 and use Explore to check:
 
