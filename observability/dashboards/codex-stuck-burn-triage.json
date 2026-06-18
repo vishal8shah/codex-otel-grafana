@@ -6,15 +6,15 @@
   "panels": [
     {
       "id": 4,
-      "title": "Runs analyzed",
+      "title": "Unique runs analyzed",
       "type": "stat",
-      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 5 },
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 5 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "sum(count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" [$__range]))",
+          "expr": "count(sum by (run_hash) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" [$__range])))",
           "queryType": "range"
         }
       ],
@@ -26,15 +26,15 @@
     },
     {
       "id": 1,
-      "title": "Stuck candidates now",
+      "title": "Runs with stuck-candidate records",
       "type": "stat",
-      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 5 },
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 5 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "sum(count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"STUCK_CANDIDATE\" [$__range]))",
+          "expr": "count(sum by (run_hash) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"STUCK_CANDIDATE\" [$__range])))",
           "queryType": "range"
         }
       ],
@@ -45,28 +45,8 @@
       "fieldConfig": { "defaults": {}, "overrides": [] }
     },
     {
-      "id": 2,
-      "title": "Tokens observed on runs without completion",
-      "type": "stat",
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 5 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "sum(sum_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"NO_COMPLETION_TOKEN_BURN\" | unwrap tokens_observed [$__range]))",
-          "queryType": "range"
-        }
-      ],
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "auto"
-      },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
-    },
-    {
       "id": 3,
-      "title": "Active / incomplete run triage",
+      "title": "Incomplete run-health records",
       "type": "table",
       "gridPos": { "x": 0, "y": 5, "w": 24, "h": 14 },
       "datasource": { "type": "loki", "uid": "loki" },
@@ -74,7 +54,7 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=~\"SLOW_BUT_ALIVE|STUCK_CANDIDATE|NO_COMPLETION_TOKEN_BURN|UNKNOWN_INCOMPLETE\" | json",
+          "expr": "{service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=~\"SLOW_BUT_ALIVE|STUCK_CANDIDATE|UNKNOWN_INCOMPLETE\" | json",
           "queryType": "range"
         }
       ],
@@ -94,10 +74,9 @@
               "age_seconds": 4,
               "quiet_for_seconds": 5,
               "completed": 6,
-              "tokens_observed": 7,
-              "last_event": 8,
-              "model": 9,
-              "notes": 10
+              "last_event": 7,
+              "model": 8,
+              "notes": 9
             }
           }
         }
@@ -110,6 +89,6 @@
   "time": { "from": "now-6h", "to": "now" },
   "timezone": "browser",
   "refresh": "30s",
-  "title": "Codex Stuck + Burn Triage",
+  "title": "Codex Stuck Triage",
   "uid": "codex-stuck-burn-triage"
 }

@@ -1,7 +1,7 @@
-# Codex Stuck + Burn Triage Analyzer
+# Codex Stuck Triage Analyzer
 
 This Python tool answers one narrow question: **is a Codex run still making
-progress, or is it a stuck candidate while observed token usage accumulates?**
+progress, or is it a stuck candidate?**
 
 It queries local Codex logs through Grafana's Loki datasource proxy, groups
 records by `run_hash`, classifies the current evidence, and can emit clearly
@@ -50,17 +50,15 @@ python tools/run-health/run_health.py --emit-derived
 
 ## Minimal Validation Trigger
 
-The validation trigger emits only four fake Codex-like source log records
-through the real OTLP logs receiver: one stuck-candidate run and one
-no-completion token-burn run. It does not emit `codex.run_health` rows or any
-metrics. The analyzer must consume the source records and produce the derived
-rows.
+The validation trigger emits only two fake Codex-like source log records
+through the real OTLP logs receiver for one stuck-candidate run. It does not
+emit `codex.run_health` rows or any metrics. The analyzer must consume the
+source records and produce the derived row.
 
 ```text
-python tools/run-health/synthetic_trigger.py --scenario stuck-candidate
-python tools/run-health/synthetic_trigger.py --scenario no-completion-token-burn
+python tools/run-health/synthetic_trigger.py
 python tools/run-health/run_health.py --emit-derived \
-  --env-filter synthetic-stuck-burn-phase2
+  --env-filter synthetic-stuck-phase2
 ```
 
 The trigger generates ephemeral fake identifiers in memory and never prints
@@ -87,7 +85,6 @@ Rows contain only:
 
 - `run_hash`, state and safe timestamps
 - age/quiet duration and completion status
-- observed token counts
 - safe event name and model
 - event count, thresholds and explanatory notes
 
@@ -104,15 +101,8 @@ reduced to an allowlist and cleared after the raw identifier is hashed.
 - `STUCK_CANDIDATE`: meaningful activity was observed, no completion was seen,
   and the run is quiet beyond the stuck threshold. This is a heuristic
   candidate, never proof.
-- `NO_COMPLETION_TOKEN_BURN`: no completion, but actual schema-confirmed token
-  fields were observed on records correlated to the same `run_hash`. Elapsed
-  time alone can never produce this state.
 - `UNKNOWN_INCOMPLETE`: evidence is insufficient for the other incomplete
   states.
-
-`tokens_observed` is input plus output tokens. Cached and reasoning counts are
-subsets, and `tool_token_count` semantics are not established strongly enough
-in `SCHEMA.md` to add them without risking double counting.
 
 ## Privacy Model
 
@@ -137,23 +127,23 @@ The derived event is named `codex.run_health`, uses service name
   flush, and query `{service_name="Codex Run Health"}` in Loki Explore.
 - **401 from Grafana:** set `GRAFANA_USER` and `GRAFANA_PASSWORD`.
 
-## Stuck + Burn Playbook
+## Stuck Playbook
 
-- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
-- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Symptom:** Codex seems stuck or silent without a completed answer.
+- **Check:** open **Grafana > Codex Stuck Triage**.
 - **Meaning:** `STUCK_CANDIDATE` means meaningful activity went quiet beyond
-  the threshold and is a heuristic, not proof; `NO_COMPLETION_TOKEN_BURN`
-  means correlated token fields were observed without completion;
-  `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
-  window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
-- **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and
-  `tokens_observed`, then check safe Loki/Tempo context around the same
-  `run_hash` and time window. Never pivot to or expose the raw identifier.
+  the threshold and is a heuristic, not proof; `SLOW_BUT_ALIVE` has recent
+  activity; `COMPLETED_RECENTLY` completed in the window; and
+  `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
+- **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and time
+  fields, then check safe Loki/Tempo context around the same `run_hash` and
+  time window. Never pivot to or expose the raw identifier.
 
 `run_hash` is a privacy-safe hash of the source run identifier; the raw value is
 never shown. Derived `codex.run_health` records are not native Codex telemetry,
-and no native `codex_*` metrics are used. An empty incomplete table is healthy
-when **Runs analyzed** is non-zero and both problem stats are zero.
+and no native `codex_*` metrics are used. Dashboard stats deduplicate by
+`run_hash` over the selected range. The table is the primary evidence view and
+can contain repeated derived snapshots when the analyzer runs more than once.
 
 ## Limitations
 
@@ -161,7 +151,7 @@ when **Runs analyzed** is non-zero and both problem stats are zero.
   Tempo usage because `SCHEMA.md` does not prove that trace thread identifiers
   equal the log run identifier.
 - Silence alone is not proof of a stuck run; thresholds produce candidates.
-- Token-burn classification requires actual correlated token fields and may be
-  absent with the currently observed completion-only token shape.
+- No token-burn state is claimed: `SCHEMA.md` confirms log token fields only on
+  `response.completed`, and no privacy-safe log/trace run join is established.
 - The analyzer is a manual snapshot tool, not a scheduler or broad run-health
   suite.

@@ -42,19 +42,17 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex / Tempo Traces](http://localhost:3000/d/codex-tempo-traces/codex-tempo-traces)
 - [Codex / Prometheus Metrics](http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics)
 - [Codex / Token Economics](http://localhost:3000/d/codex-token-economics/codex-token-economics)
-- [Codex Stuck + Burn Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
+- [Codex Stuck Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
 
-## Codex Stuck + Burn Triage
+## Codex Stuck Triage
 
 This focused derived analysis asks whether a run is still making progress or is
-a stuck candidate while observed token usage accumulates. It is not native
-Codex telemetry and emits no native `codex_*` metrics.
+a stuck candidate. It is not native Codex telemetry and emits no native
+`codex_*` metrics.
 
 The analyzer hashes the observed raw run identifier immediately and exposes
 only `run_hash`; raw identifiers are never written to output or Grafana.
 `STUCK_CANDIDATE` is a threshold-based heuristic, not proof.
-`NO_COMPLETION_TOKEN_BURN` requires actual correlated token fields and is never
-inferred from elapsed time.
 
 ```text
 .\scripts\run-health.ps1
@@ -68,21 +66,21 @@ Tune the six-hour window and two-/ten-minute thresholds with
 `--stuck-threshold-seconds`. See [the analyzer guide](tools/run-health/README.md)
 for privacy, output and troubleshooting details.
 
-### Stuck + Burn Playbook
+### Stuck Playbook
 
-- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
-- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Symptom:** Codex seems stuck or silent without a completed answer.
+- **Check:** open **Grafana > Codex Stuck Triage**.
 - **Meaning:** `STUCK_CANDIDATE` is a quiet-time heuristic, not proof;
-  `NO_COMPLETION_TOKEN_BURN` has correlated observed tokens without completion;
   `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
   window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
 - **Action:** inspect `run_hash`, `last_event`, `quiet_for_seconds`, and
-  `tokens_observed`, then use safe Loki/Tempo context in the same time window.
+  time fields, then use safe Loki/Tempo context in the same time window.
 
 `run_hash` is a privacy-safe hash of the source run identifier; the raw value is
 never shown. Derived `codex.run_health` records are not native Codex telemetry,
-and this feature emits no native `codex_*` metrics. An empty incomplete table is
-healthy when **Runs analyzed** is non-zero and both problem stats are zero.
+and this feature emits no native `codex_*` metrics. Dashboard stats count unique
+`run_hash` values in the selected range, while the table shows derived snapshots
+and can contain repeated analyzer emissions for the same run.
 
 ## Quick Start
 

@@ -19,7 +19,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex / Tempo Traces: http://localhost:3000/d/codex-tempo-traces/codex-tempo-traces
 - Codex / Prometheus Metrics: http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics
 - Codex / Token Economics: http://localhost:3000/d/codex-token-economics/codex-token-economics
-- Codex Stuck + Burn Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
+- Codex Stuck Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -66,16 +66,14 @@ pricing before budgeting.
 {service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"
 ```
 
-## Codex Stuck + Burn Triage
+## Codex Stuck Triage
 
 The focused triage dashboard uses only `codex.run_health` derived logs from
-`tools/run-health/run_health.py`. It shows stuck candidates, tokens actually
-observed on incomplete runs, runs analyzed, and a privacy-safe
-active/incomplete table.
+`tools/run-health/run_health.py`. It shows unique analyzed runs, unique runs
+with stuck-candidate records, and a privacy-safe incomplete-record table.
 
 Raw run identifiers are hashed and dropped; Grafana receives `run_hash` only.
-The stuck state is a heuristic candidate, and no-completion token burn requires
-correlated observed token fields. No native `codex_*` metrics are created.
+The stuck state is a heuristic candidate. No native `codex_*` metrics are created.
 
 ```text
 python tools/run-health/run_health.py --dry-run
@@ -86,22 +84,22 @@ Use `--window-minutes`, `--alive-threshold-seconds`, and
 `--stuck-threshold-seconds` to tune classification. The analyzer guide under
 `tools/run-health/README.md` documents the complete privacy and state model.
 
-### Stuck + Burn Playbook
+### Stuck Playbook
 
-- **Symptom:** Codex seems stuck, silent, or expensive without a completed answer.
-- **Check:** open **Grafana > Codex Stuck + Burn Triage**.
+- **Symptom:** Codex seems stuck or silent without a completed answer.
+- **Check:** open **Grafana > Codex Stuck Triage**.
 - **Meaning:** `STUCK_CANDIDATE` is a quiet-time heuristic, not proof;
-  `NO_COMPLETION_TOKEN_BURN` has correlated observed tokens without completion;
   `SLOW_BUT_ALIVE` has recent activity; `COMPLETED_RECENTLY` completed in the
   window; and `UNKNOWN_INCOMPLETE` lacks enough confirmed evidence.
 - **Action:** use `run_hash`, `last_event`, `quiet_for_seconds`, and
-  `tokens_observed`, then inspect safe Loki/Tempo context in the same time
-  window without exposing the raw identifier.
+  time fields, then inspect safe Loki/Tempo context in the same time window
+  without exposing the raw identifier.
 
 `run_hash` is a privacy-safe hash of the source run identifier; the raw value is
 never shown. The `codex.run_health` rows are derived rather than native Codex
-telemetry, and no native `codex_*` metrics are used. An empty incomplete table
-is healthy when **Runs analyzed** is non-zero and both problem stats are zero.
+telemetry, and no native `codex_*` metrics are used. Stats count unique
+`run_hash` values in the selected range. The table is the primary evidence view
+and can contain repeated derived snapshots when the analyzer runs more than once.
 
 ## Prerequisites
 

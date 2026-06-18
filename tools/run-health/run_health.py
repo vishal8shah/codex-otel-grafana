@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Privacy-safe stuck/burn triage derived from observed Codex Loki fields."""
+"""Privacy-safe stuck-run triage derived from observed Codex Loki fields."""
 
 from __future__ import annotations
 
@@ -23,7 +23,6 @@ from typing import Any
 COMPLETED_RECENTLY = "COMPLETED_RECENTLY"
 SLOW_BUT_ALIVE = "SLOW_BUT_ALIVE"
 STUCK_CANDIDATE = "STUCK_CANDIDATE"
-NO_COMPLETION_TOKEN_BURN = "NO_COMPLETION_TOKEN_BURN"
 UNKNOWN_INCOMPLETE = "UNKNOWN_INCOMPLETE"
 
 DERIVED_EVENT_NAME = "codex.run_health"
@@ -43,14 +42,6 @@ FORBIDDEN_NATIVE_METRICS = (
     "codex.tool.call",
     "codex.tool.call.duration_ms",
 )
-
-TOKEN_FIELDS = {
-    "input_token_count": "input_tokens",
-    "output_token_count": "output_tokens",
-    "cached_token_count": "cached_tokens",
-    "reasoning_token_count": "reasoning_tokens",
-    "tool_token_count": "tool_tokens",
-}
 
 MEANINGFUL_EVENTS = {
     "codex.conversation_starts",
@@ -78,14 +69,6 @@ def parse_loki_timestamp(value: str) -> dt.datetime:
     return dt.datetime.fromtimestamp(int(value) / 1_000_000_000, tz=dt.timezone.utc)
 
 
-def parse_nonnegative_int(value: Any) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, parsed)
-
-
 def hash_run_identifier(raw_identifier: str, key: str | None) -> str:
     encoded = raw_identifier.encode("utf-8")
     if key:
@@ -103,11 +86,6 @@ class RunAggregate:
     event_count: int = 0
     completed: bool = False
     meaningful_activity: bool = False
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cached_tokens: int = 0
-    reasoning_tokens: int = 0
-    tool_tokens: int = 0
 
     def add_event(self, event: dict[str, Any]) -> None:
         timestamp = event["timestamp"]
@@ -123,14 +101,6 @@ class RunAggregate:
             event["event_name"] == "codex.sse_event"
             and event.get("event_kind") == "response.completed"
         )
-        for source_name, output_name in TOKEN_FIELDS.items():
-            setattr(self, output_name, getattr(self, output_name) + event.get(source_name, 0))
-
-    @property
-    def tokens_observed(self) -> int:
-        # Cached/reasoning are subsets and tool_token_count semantics are not
-        # established in SCHEMA.md. Input + output avoids double counting.
-        return self.input_tokens + self.output_tokens
 
 
 def classify_run(
@@ -146,9 +116,6 @@ def classify_run(
     if run.completed:
         state = COMPLETED_RECENTLY
         notes = "Completion observed in the analysis window."
-    elif run.tokens_observed > 0:
-        state = NO_COMPLETION_TOKEN_BURN
-        notes = "Observed correlated token fields without a completion event."
     elif quiet_for_seconds <= alive_threshold_seconds:
         state = SLOW_BUT_ALIVE
         notes = "Recent schema-confirmed activity observed; completion not yet seen."
@@ -157,7 +124,7 @@ def classify_run(
         notes = "Meaningful activity went quiet beyond the threshold; candidate only."
     else:
         state = UNKNOWN_INCOMPLETE
-        notes = "Insufficient confirmed evidence for alive, stuck, or token-burn classification."
+        notes = "Insufficient confirmed evidence for alive or stuck classification."
 
     return {
         "run_hash": run.run_hash,
@@ -167,12 +134,6 @@ def classify_run(
         "age_seconds": age_seconds,
         "quiet_for_seconds": quiet_for_seconds,
         "completed": run.completed,
-        "tokens_observed": run.tokens_observed,
-        "input_tokens": run.input_tokens,
-        "output_tokens": run.output_tokens,
-        "cached_tokens": run.cached_tokens,
-        "reasoning_tokens": run.reasoning_tokens,
-        "tool_tokens": run.tool_tokens,
         "last_event": run.last_event,
         "model": run.model,
         "event_count": run.event_count,
@@ -275,8 +236,6 @@ def safe_events_from_loki(
                 "event_kind": event_kind if event_kind == "response.completed" else "",
                 "model": str(labels.get("model", "")),
             }
-            for field_name in TOKEN_FIELDS:
-                event[field_name] = parse_nonnegative_int(labels.get(field_name))
             events.append(event)
         # Discard all remaining source metadata, including arguments/output.
         labels.clear()
@@ -378,27 +337,21 @@ def format_summary(rows: list[dict[str, Any]], window_minutes: int) -> str:
             COMPLETED_RECENTLY,
             SLOW_BUT_ALIVE,
             STUCK_CANDIDATE,
-            NO_COMPLETION_TOKEN_BURN,
             UNKNOWN_INCOMPLETE,
         )
     }
-    incomplete_tokens = sum(
-        row["tokens_observed"] for row in rows if row["state"] != COMPLETED_RECENTLY
-    )
     lines = [
-        "Codex Stuck + Burn Triage",
+        "Codex Stuck Triage",
         "",
         f"Analysis window: last {window_minutes} minutes",
         f"Runs analyzed: {len(rows)}",
         f"Completed recently: {counts[COMPLETED_RECENTLY]}",
         f"Slow but alive: {counts[SLOW_BUT_ALIVE]}",
         f"Stuck candidates: {counts[STUCK_CANDIDATE]}",
-        f"No-completion token burn: {counts[NO_COMPLETION_TOKEN_BURN]}",
         f"Unknown incomplete: {counts[UNKNOWN_INCOMPLETE]}",
-        f"Tokens observed on incomplete/no-completion runs: {incomplete_tokens}",
     ]
 
-    urgent_states = {STUCK_CANDIDATE, NO_COMPLETION_TOKEN_BURN, UNKNOWN_INCOMPLETE}
+    urgent_states = {STUCK_CANDIDATE, UNKNOWN_INCOMPLETE}
     urgent = sorted(
         (row for row in rows if row["state"] in urgent_states),
         key=lambda row: (row["state"] != STUCK_CANDIDATE, -row["quiet_for_seconds"]),
@@ -434,7 +387,7 @@ def format_summary(rows: list[dict[str, Any]], window_minutes: int) -> str:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Classify privacy-safe Codex stuck/burn candidates from local Loki logs."
+        description="Classify privacy-safe Codex stuck candidates from local Loki logs."
     )
     parser.add_argument("--window-minutes", type=int, default=360)
     parser.add_argument("--alive-threshold-seconds", type=int, default=120)

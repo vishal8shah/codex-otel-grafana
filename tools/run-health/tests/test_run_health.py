@@ -52,19 +52,6 @@ class StateModelTests(unittest.TestCase):
     def test_stuck_candidate(self):
         self.assertEqual(classify(aggregate(quiet=900))["state"], run_health.STUCK_CANDIDATE)
 
-    def test_no_completion_token_burn_requires_observed_tokens(self):
-        run = aggregate(quiet=30)
-        run.input_tokens = 100
-        run.output_tokens = 25
-        row = classify(run)
-        self.assertEqual(row["state"], run_health.NO_COMPLETION_TOKEN_BURN)
-        self.assertEqual(row["tokens_observed"], 125)
-
-    def test_elapsed_time_alone_does_not_trigger_token_burn(self):
-        row = classify(aggregate(quiet=900))
-        self.assertEqual(row["state"], run_health.STUCK_CANDIDATE)
-        self.assertEqual(row["tokens_observed"], 0)
-
     def test_unknown_incomplete(self):
         self.assertEqual(
             classify(aggregate(quiet=300, meaningful=False))["state"],
@@ -108,7 +95,6 @@ class StateModelTests(unittest.TestCase):
                 "event_name",
                 "event_kind",
                 "model",
-                *run_health.TOKEN_FIELDS,
             },
         )
         self.assertNotIn("fixture-private-id", str(events))
@@ -120,45 +106,62 @@ class StateModelTests(unittest.TestCase):
             run_health.assert_log_only_emission("http://localhost:4318/v1/metrics", payload)
 
     def test_synthetic_trigger_emits_source_logs_not_derived_rows_or_metrics(self):
-        payload = synthetic_trigger.build_synthetic_payload(
-            NOW, "synthetic-stuck-burn-fixture", 660
-        )
+        payload = synthetic_trigger.build_synthetic_payload(NOW, "synthetic-stuck-fixture", 660)
         synthetic_trigger.validate_payload("http://localhost:4318/v1/logs", payload)
         serialized = str(payload)
         self.assertIn("codex.conversation_starts", serialized)
         self.assertIn("codex.api_request", serialized)
-        self.assertIn("codex.sse_event", serialized)
         self.assertNotIn("codex.run_health", serialized)
         self.assertNotIn("resourceMetrics", serialized)
         self.assertIn("synthetic.scenario", serialized)
         self.assertIn("synthetic.run_id", serialized)
         self.assertIn("stuck-candidate", serialized)
-        self.assertIn("no-completion-token-burn", serialized)
 
-    def test_each_synthetic_scenario_emits_exactly_two_correlated_source_logs(self):
-        for scenario, expected_events in (
-            ("stuck-candidate", {"codex.conversation_starts", "codex.api_request"}),
-            (
-                "no-completion-token-burn",
-                {"codex.conversation_starts", "codex.sse_event"},
-            ),
-        ):
-            payload = synthetic_trigger.build_synthetic_payload(
-                NOW, "synthetic-stuck-burn-fixture", 660, scenario
-            )
-            records = payload["resourceLogs"][0]["scopeLogs"][0]["logRecords"]
-            self.assertEqual(len(records), 2)
-            attributes = [
-                {
-                    item["key"]: next(iter(item["value"].values()))
-                    for item in record["attributes"]
-                }
-                for record in records
-            ]
-            self.assertEqual({item["event_name"] for item in attributes}, expected_events)
-            self.assertEqual({item["synthetic.scenario"] for item in attributes}, {scenario})
-            self.assertEqual(len({item["synthetic.run_id"] for item in attributes}), 1)
-            self.assertEqual(len({item["conversation_id"] for item in attributes}), 1)
+    def test_synthetic_stuck_scenario_has_two_correlated_source_logs(self):
+        payload = synthetic_trigger.build_synthetic_payload(
+            NOW, "synthetic-stuck-fixture", 660
+        )
+        records = payload["resourceLogs"][0]["scopeLogs"][0]["logRecords"]
+        self.assertEqual(len(records), 2)
+        attributes = [
+            {
+                item["key"]: next(iter(item["value"].values()))
+                for item in record["attributes"]
+            }
+            for record in records
+        ]
+        self.assertEqual(
+            {item["event_name"] for item in attributes},
+            {"codex.conversation_starts", "codex.api_request"},
+        )
+        self.assertEqual(
+            {item["synthetic.scenario"] for item in attributes}, {"stuck-candidate"}
+        )
+        self.assertEqual(len({item["synthetic.run_id"] for item in attributes}), 1)
+        self.assertEqual(len({item["conversation_id"] for item in attributes}), 1)
+
+    def test_unconfirmed_noncompletion_token_fields_are_not_ingested(self):
+        response = {
+            "data": {
+                "result": [
+                    {
+                        "stream": {
+                            "conversation_id": "synthetic-private-id",
+                            "event_name": "codex.sse_event",
+                            "input_token_count": "100",
+                            "output_token_count": "25",
+                        },
+                        "values": [["1781784000000000000", ""]],
+                    }
+                ]
+            }
+        }
+        events, _ = run_health.safe_events_from_loki(response, "fixture-key")
+        self.assertNotIn("input_token_count", events[0])
+        self.assertNotIn("output_token_count", events[0])
+        row = classify(run_health.aggregate_events(events)[0])
+        self.assertEqual(row["state"], run_health.SLOW_BUT_ALIVE)
+        self.assertNotIn("tokens_observed", row)
 
     def test_completed_only_summary_is_visibly_healthy_and_private(self):
         run = aggregate(quiet=30)
@@ -167,7 +170,6 @@ class StateModelTests(unittest.TestCase):
         summary = run_health.format_summary([row], 360)
         self.assertIn("Runs analyzed: 1", summary)
         self.assertIn("Stuck candidates: 0", summary)
-        self.assertIn("No-completion token burn: 0", summary)
         self.assertIn("Healthy outcome:", summary)
         self.assertNotIn("conversation_id", summary)
 
