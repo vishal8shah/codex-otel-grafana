@@ -32,7 +32,7 @@ It captures the setup we verified locally:
 - OTLP/gRPC receiver: localhost:4317
 - Local dashboards for logs, traces, Prometheus spanmetrics, and token economics
 - Collector-side redaction for user identity and prompt-like attributes
-- Cross-platform start/stop scripts, plus PowerShell dashboard provisioning
+- Cross-platform start/stop and Grafana file-based dashboard provisioning
 
 ## Dashboards
 
@@ -54,7 +54,6 @@ adding appropriate security controls.
 
 ```powershell
 .\scripts\start.ps1 -Pull
-.\observability\setup-codex-dashboards.ps1
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
 codex
@@ -72,11 +71,10 @@ Windows users who need the original direct `docker run` path.
 codex
 ```
 
-Start and stop are cross-platform in Phase 1. Dashboard provisioning is still
-PowerShell-based: macOS and Linux users need `pwsh` to run
-`observability/setup-codex-dashboards.ps1`. Cross-platform provisioning-as-code
-through Grafana file-based provisioning in Docker Compose is planned for a
-future phase.
+Start, stop, datasource provisioning, and dashboard provisioning are
+cross-platform. Docker Compose mounts the repository-owned Grafana provisioning
+files and dashboards read-only, so macOS and Linux do not need `pwsh` for the
+normal setup path.
 
 ### Docker Compose directly
 
@@ -89,8 +87,19 @@ docker compose ps
 Stop the stack with `scripts/stop.ps1`, `scripts/stop.sh`, or
 `docker compose stop`. Pass `-Remove` or `--remove` to the wrapper scripts to
 remove the container and Compose network while preserving the named data
-volume. Phase 1 keeps the existing `grafana/otel-lgtm:latest` behavior; future
-hardening should pin and deliberately update a tested image tag.
+volume. `LGTM_DATA_VOLUME` can select a separately named disposable volume for
+isolated provisioning tests; never point a purge test at the retained default.
+The default image is pinned to the runtime-tested
+`grafana/otel-lgtm:0.28.0` tag (digest
+`sha256:10f48eb2f8670134df542177bb19536c55421b089e43f9dfc2a27d4c078204d8`).
+To update it, change `LGTM_IMAGE` in `.env.example` and the Compose fallback,
+pull the candidate tag, then repeat retained-volume, clean-volume, Windows, and
+WSL2 provisioning validation before merging. Roll back by restoring the prior
+tag; do not use `latest` as a release default.
+
+`observability/setup-codex-dashboards.ps1` remains available as a legacy manual
+refresh and parity-comparison tool, but it is not required for normal
+cross-platform provisioning.
 
 Submit a tiny non-sensitive prompt in the interactive session, exit cleanly,
 then verify the data in Grafana Explore. The schema verifier prints query hints.

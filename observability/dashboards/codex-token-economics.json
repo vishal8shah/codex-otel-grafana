@@ -1,0 +1,729 @@
+{
+    "schemaVersion":  39,
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "value":  "Codex Desktop",
+                                                        "text":  "Codex Desktop"
+                                                    },
+                                        "name":  "service",
+                                        "type":  "constant",
+                                        "label":  "Service",
+                                        "hide":  0,
+                                        "query":  "Codex Desktop"
+                                    }
+                                ]
+                   },
+    "annotations":  {
+                        "list":  [
+
+                                 ]
+                    },
+    "version":  0,
+    "panels":  [
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  1,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Input tokens",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  2,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  4
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Output tokens",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  3,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  8
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Cached tokens",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  4,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Reasoning tokens",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap reasoning_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  5,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  16
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Tool tokens",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap tool_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  6,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  4,
+                                       "h":  4,
+                                       "x":  20
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Completions",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(count_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyUSD"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  7,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Estimated total cost",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "(((sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__range])) - sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range]))) * 5 / 1000000) + (sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range])) * 0.5 / 1000000) + (sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__range])) * 30 / 1000000))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyUSD"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  8,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  6
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Estimated input cost",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "(((sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__range])) - sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range]))) * 5 / 1000000) + (sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range])) * 0.5 / 1000000))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyUSD"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  9,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Estimated output cost",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__range])) * 30 / 1000000",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyUSD"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  10,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  18
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Estimated cache savings",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range])) * (5 - 0.5) / 1000000",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyUSD"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  11,
+                       "gridPos":  {
+                                       "y":  8,
+                                       "w":  24,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Cost trend",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "estimated USD",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "(((sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__interval])) - sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__interval]))) * 5) + (sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__interval])) * 0.5) + (sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__interval])) * 30)) / 1000000",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  12,
+                       "gridPos":  {
+                                       "y":  16,
+                                       "w":  16,
+                                       "h":  9,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Token trend by type",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "input",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__interval]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "output",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__interval]))",
+                                           "refId":  "B",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "cached",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__interval]))",
+                                           "refId":  "C",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "reasoning",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap reasoning_token_count [$__interval]))",
+                                           "refId":  "D",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  13,
+                       "gridPos":  {
+                                       "y":  16,
+                                       "w":  8,
+                                       "h":  9,
+                                       "x":  16
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Token mix",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "input",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap input_token_count [$__range]))",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "output",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap output_token_count [$__range]))",
+                                           "refId":  "B",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "cached",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap cached_token_count [$__range]))",
+                                           "refId":  "C",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "reasoning",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap reasoning_token_count [$__range]))",
+                                           "refId":  "D",
+                                           "queryType":  "range"
+                                       },
+                                       {
+                                           "legendFormat":  "tool",
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "sum(sum_over_time({service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\" | unwrap tool_token_count [$__range]))",
+                                           "refId":  "E",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "barchart",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  14,
+                       "gridPos":  {
+                                       "y":  25,
+                                       "w":  8,
+                                       "h":  6,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Pricing assumptions",
+                       "targets":  [
+
+                                   ],
+                       "type":  "text",
+                       "options":  {
+                                       "content":  "Estimated USD uses configurable script defaults: input $5.00/M, cached input $0.50/M, output $30.00/M. Recheck official pricing before budgeting.",
+                                       "mode":  "markdown"
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  15,
+                       "gridPos":  {
+                                       "y":  25,
+                                       "w":  16,
+                                       "h":  9,
+                                       "x":  8
+                                   },
+                       "datasource":  {
+                                          "type":  "loki",
+                                          "uid":  "loki"
+                                      },
+                       "title":  "Completion records",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki"
+                                                          },
+                                           "expr":  "{service_name=\"$service\"} | event_name=\"codex.sse_event\" | event_kind=\"response.completed\"",
+                                           "refId":  "A",
+                                           "queryType":  "range"
+                                       }
+                                   ],
+                       "type":  "logs",
+                       "options":  {
+                                       "sortOrder":  "Descending",
+                                       "showTime":  true,
+                                       "wrapLogMessage":  true,
+                                       "showLabels":  true
+                                   }
+                   }
+               ],
+    "tags":  [
+                 "codex",
+                 "opentelemetry",
+                 "local"
+             ],
+    "time":  {
+                 "to":  "now",
+                 "from":  "now-6h"
+             },
+    "timezone":  "browser",
+    "refresh":  "30s",
+    "title":  "Codex / Token Economics",
+    "uid":  "codex-token-economics"
+}

@@ -9,8 +9,20 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-container_name="$("${compose[@]}" config | awk '$1 == "container_name:" { print $2; exit }')"
-compose_project="$("${compose[@]}" config | awk '$1 == "name:" { print $2; exit }')"
+if command -v jq >/dev/null 2>&1; then
+  compose_json="$("${compose[@]}" config --format json)"
+  container_name="$(jq -er '.services.lgtm.container_name' <<<"$compose_json")"
+  compose_project="$(jq -er '.name' <<<"$compose_json")"
+else
+  echo "jq was not found; falling back to Compose YAML metadata parsing." >&2
+  container_name="$("${compose[@]}" config | awk '$1 == "container_name:" { print $2; exit }')"
+  compose_project="$("${compose[@]}" config | awk '$1 == "name:" { print $2; exit }')"
+fi
+
+if [[ -z "$container_name" || -z "$compose_project" ]]; then
+  echo "Could not resolve the Compose container name and project." >&2
+  exit 1
+fi
 
 if docker inspect "$container_name" >/dev/null 2>&1; then
   existing_project="$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$container_name")"
@@ -42,7 +54,6 @@ fi
 
 echo
 echo "LGTM is bound to 127.0.0.1 only. Port overrides can be set in a local .env file."
-echo "This script starts LGTM only; dashboard provisioning remains PowerShell-based in Phase 1."
-echo "On macOS/Linux, install pwsh and run observability/setup-codex-dashboards.ps1."
-echo "Grafana file-based provisioning through Docker Compose is planned for a future phase."
+echo "Grafana datasources and Codex dashboards are provisioned from read-only repository files."
+echo "PowerShell is not required for normal dashboard provisioning."
 echo "Run scripts/doctor.sh, then use interactive 'codex' for telemetry validation."

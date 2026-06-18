@@ -1,0 +1,288 @@
+{
+    "schemaVersion":  39,
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "value":  "Codex Desktop",
+                                                        "text":  "Codex Desktop"
+                                                    },
+                                        "name":  "service",
+                                        "type":  "constant",
+                                        "label":  "Service",
+                                        "hide":  0,
+                                        "query":  "Codex Desktop"
+                                    }
+                                ]
+                   },
+    "annotations":  {
+                        "list":  [
+
+                                 ]
+                    },
+    "version":  0,
+    "panels":  [
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  1,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Span rate",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{span_name}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"$service\"}[$__rate_interval]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  2,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "p95 span latency",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{span_name}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "topk(10, histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"$service\"}[$__rate_interval]))))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  3,
+                       "gridPos":  {
+                                       "y":  8,
+                                       "w":  8,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Spans by kind",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{span_kind}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum by (span_kind) (increase(traces_spanmetrics_calls_total{service=\"$service\"}[$__range]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "barchart",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  4,
+                       "gridPos":  {
+                                       "y":  8,
+                                       "w":  8,
+                                       "h":  8,
+                                       "x":  8
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Status code breakdown",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{status_code}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum by (status_code) (rate(traces_spanmetrics_calls_total{service=\"$service\"}[$__rate_interval]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  5,
+                       "gridPos":  {
+                                       "y":  8,
+                                       "w":  8,
+                                       "h":  8,
+                                       "x":  16
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Service graph requests",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{client}} -\u003e {{server}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum by (client, server) (rate(traces_service_graph_request_total{server=\"$service\"}[$__rate_interval]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  6,
+                       "gridPos":  {
+                                       "y":  16,
+                                       "w":  24,
+                                       "h":  10,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "tempo",
+                                          "uid":  "tempo"
+                                      },
+                       "title":  "Trace search",
+                       "targets":  [
+                                       {
+                                           "query":  "{ resource.service.name = \"$service\" }",
+                                           "datasource":  {
+                                                              "type":  "tempo",
+                                                              "uid":  "tempo"
+                                                          },
+                                           "refId":  "A",
+                                           "queryType":  "traceql"
+                                       }
+                                   ],
+                       "type":  "table",
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   }
+               ],
+    "tags":  [
+                 "codex",
+                 "opentelemetry",
+                 "local"
+             ],
+    "time":  {
+                 "to":  "now",
+                 "from":  "now-6h"
+             },
+    "timezone":  "browser",
+    "refresh":  "30s",
+    "title":  "Codex / Tempo Traces",
+    "uid":  "codex-tempo-traces"
+}

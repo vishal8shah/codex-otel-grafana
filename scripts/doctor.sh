@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 set -u
 
+strict=0
+if [[ "${1:-}" == "--strict" ]]; then
+  strict=1
+elif [[ $# -gt 0 ]]; then
+  printf 'Usage: %s [--strict]\n' "$0" >&2
+  exit 2
+fi
+
 GRAFANA_URL="${GRAFANA_URL:-http://localhost:3000}"
 CONTAINER_NAME="${CONTAINER_NAME:-codex-otel-lgtm}"
 CODEX_CONFIG_PATH="${CODEX_CONFIG_PATH:-${HOME}/.codex/config.toml}"
 failures=0
 
 check() {
-  local name="$1" result="$2" detail="$3"
+  local name="$1" result="$2" detail="$3" required="${4:-1}"
   if [[ "$result" == "0" ]]; then
     printf '[PASS] %s: %s\n' "$name" "$detail"
+  elif [[ "$required" == "0" ]]; then
+    printf '[INFO] %s: %s\n' "$name" "$detail"
   else
     printf '[FAIL] %s: %s\n' "$name" "$detail"
     failures=$((failures + 1))
@@ -60,12 +70,13 @@ command -v codex >/dev/null 2>&1; codex_ok=$?
 if [[ "$codex_ok" == "0" ]]; then
   codex_version="$(codex --version 2>/dev/null)"; codex_run=$?
   codex_detail="${codex_version:-$(command -v codex)}"
-  check "Codex CLI" "$codex_run" "$codex_detail"
+  check "Codex CLI" "$codex_run" "$codex_detail" "$strict"
 else
-  check "Codex CLI" 1 "not found on PATH"
+  check "Codex CLI" 1 "not found on PATH" "$strict"
 fi
 
-[[ -f "$CODEX_CONFIG_PATH" ]]; check "User Codex config" "$?" "$CODEX_CONFIG_PATH"
+[[ -f "$CODEX_CONFIG_PATH" ]]; check "User Codex config" "$?" "$CODEX_CONFIG_PATH" "$strict"
 
-printf '\nDoctor reports connectivity only. Run schema-verify separately for discovery guidance.\n'
+printf '\nStack health determines the default exit code. Use --strict to require Codex CLI and config readiness.\n'
+printf 'Run schema-verify separately for discovery guidance.\n'
 (( failures == 0 ))

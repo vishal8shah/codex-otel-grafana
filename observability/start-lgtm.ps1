@@ -1,6 +1,6 @@
 param(
     [string]$ContainerName = "codex-otel-lgtm",
-    [string]$Image = "grafana/otel-lgtm:latest",
+    [string]$Image = "grafana/otel-lgtm:0.28.0",
     [string]$OtelCollectorConfig = "$PSScriptRoot\otelcol-config.yaml",
     [switch]$Pull
 )
