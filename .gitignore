@@ -15,6 +15,7 @@ grafana-data/
 loki-data/
 tempo-data/
 prometheus-data/
+schema-observation-output/
 
 # OS/editor noise
 .DS_Store

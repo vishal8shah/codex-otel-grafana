@@ -52,29 +52,74 @@ queries; they do not declare that a signal exists or is absent.
 - Tool/MCP observability is limited to Codex acting as a client, and only when
   client-side calls appear in emitted logs, metrics, or traces.
 
+## Fresh Interactive Discovery Run
+
+This evidence was collected from a real interactive CLI session. Raw terminal
+output and raw telemetry records were discarded; only schema keys, safe names,
+counts, and safe enum-like values were retained locally in the gitignored
+`schema-observation-output/` directory.
+
+| Evidence item | Value |
+|---|---|
+| Date | 2026-06-18, 03:12:44-03:13:38 UTC |
+| Codex version | `codex-cli 0.139.0` |
+| Entrypoint | interactive `codex` (no subcommand) |
+| Platform | Windows 10, Windows PowerShell 5.1 |
+| Service name | `Codex Desktop` |
+| Backend | local `grafana/otel-lgtm`: Loki, Prometheus, and Tempo through the Grafana HTTP proxy |
+| Config path | user-level `%USERPROFILE%\.codex\config.toml` |
+| Prompt logging | `log_user_prompt = false` |
+| Data isolation | Retained historical data was present. The fresh run was isolated by `env=schema-tool-discovery-20260618-131244` and a bounded UTC query window. |
+| Interaction | Non-sensitive smoke prompt plus one read-only `echo` shell tool call; the requested tool action did not read repository files |
+| Exit | clean PTY EOF, process exit status `0`, followed by exporter flush time |
+| Query method | sanitized Loki, Prometheus, and Tempo HTTP API queries; no raw records copied into this file |
+
+The Loki selector used for the run was:
+
+```logql
+{service_name="Codex Desktop"} | env="schema-tool-discovery-20260618-131244"
+```
+
+The completion selector added:
+
+```logql
+| event_name="codex.sse_event" | event_kind="response.completed"
+```
+
+The run produced 46 structured log records. One completion, one tool decision,
+and one tool result were observed. Tempo returned 31 traces carrying the unique
+environment value. One trace in the bounded search window could not be fetched
+because it exceeded Tempo's 5 MB query limit; its run attribution is unknown,
+so the span inventory may be incomplete.
+
 ## 4. Observed Logs
 
-Retained-data evidence note (2026-06-18): the local Loki backend was inspected
-on Windows 10 using the sanitized query
-`{service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"`.
-The records came from retained local LGTM data, not a fresh interactive run.
-The producing Codex version and entrypoint are unknown. Consequently, token
-field names from those records are not accepted as current-schema observations;
-they remain **Not tested locally for current schema** until reproduced with a
-version-stamped interactive `codex` session.
+Rows marked **Observed locally** below are supported by the fresh interactive
+evidence stamp above. The isolation filter, rather than the retained volume as a
+whole, is the source of evidence.
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
 |---|---|---|---|---|---|
-| `codex.conversation_starts` | Structured log event | Documented by official Codex docs; Not tested locally | `event_name=codex.conversation_starts` | Only after local observation | Do not query or classify this as a native metric. |
-| Completion event | Loki log | Observed locally | `event_name=codex.sse_event`, `event_kind=response.completed` | Yes | Primary token record selector. |
-| Token counts | Completion log | Not tested locally for current schema | `input_token_count`, `output_token_count`, `cached_token_count`, `reasoning_token_count`, `tool_token_count` | No, until locally validated | Official docs describe token counts on `codex.sse_event` / `response.completed`, but these field names must be reproduced with interactive `codex` before Token FinOps dashboards rely on them. Retained records had unknown producer version and entrypoint. |
+| `codex.conversation_starts` | Structured log event | Documented by official Codex docs; Observed locally | `event_name=codex.conversation_starts` | Yes, as a count | One event observed. It is not a native metric. |
+| Completion event | Structured log event | Observed locally | `event_name=codex.sse_event`, `event_kind=response.completed` | Yes | One completion observed with the selector above. |
+| Token counts | Completion log | Observed locally | `input_token_count`, `output_token_count`, `cached_token_count`, `reasoning_token_count`, `tool_token_count` | Yes, aggregate only | All five keys were present on the fresh completion record. Do not expose conversation-level values. |
 | Model | Completion log | Observed locally | `model=<model-id>` | Yes, with cardinality review | Do not infer pricing from the model name alone. |
-| Duration | Codex log metadata | Observed locally | `duration_ms=<number>` | Yes, after event scoping | Meaning depends on the associated event. |
-| HTTP result | Codex log metadata | Observed locally | `http_response_status_code=<code>`, `success=<boolean>` | Yes | Scope to a verified event before interpreting. |
+| API request result | `codex.api_request` log | Observed locally | `duration_ms`, `http_response_status_code`, `success`, `endpoint`, `attempt` | Yes, aggregate safe fields | One event observed. Endpoint values require a cardinality and privacy review. |
 | Conversation identifier | Codex log metadata | Observed locally | `conversation_id=<identifier>` | No, raw value | Hash before grouping or export. |
-| Prompt and identity fields | Historical local data | Observed locally; unsafe by default | `prompt`, `user_email`, `user_account_id` | No | Their historical presence proves the need for redaction. Current config must keep `log_user_prompt=false`; old retained data may predate redaction. |
-| `codex.tool_decision` | Loki log | Not tested | `event_name=codex.tool_decision` | Only after observation | Run an interactive tool-use test. |
-| `codex.tool_result` | Loki log | Not tested | `event_name=codex.tool_result` | Only after observation | Run an interactive tool-use test. |
+| Prompt event | `codex.user_prompt` log | Observed locally | `prompt_length` | Aggregate only | One event observed. No `prompt` field was present with `log_user_prompt=false`. |
+| Prompt and identity fields | Historical local data | Retained-data observation with unknown producer provenance; unsafe by default | `prompt`, `user_email`, `user_account_id` | No | Their historical presence proves the need for redaction, but they are not current-schema evidence. Current config must keep `log_user_prompt=false`. |
+| `codex.tool_decision` | Structured log event | Observed locally | `decision`, `source`, `tool_name`, `call_id` | Aggregate safe fields only | One event observed. Raw call identifiers are ineligible. |
+| `codex.tool_result` | Structured log event | Observed locally; unsafe fields present | `duration_ms`, `success`, `tool_name`, plus `arguments` and `output` keys | Aggregate safe fields only | One event observed. Never export raw tool arguments or output. |
+
+The complete fresh event-name inventory also included `codex.startup_phase`,
+`codex.turn_ttft`, `codex.websocket_connect`, `codex.websocket_event`, and
+`codex.websocket_request`. These are observed log event names only; their
+presence does not establish a same-named native metric.
+
+No fresh log stream contained the keys `prompt`, `user_email`,
+`user_account_id`, `input-messages`, `last-assistant-message`, `cwd`, or
+`api_key`. This is a field-key check, not proof that every possible sensitive
+value has been removed from free-form tool arguments or output.
 
 Retained LGTM volumes can preserve telemetry that predates the current
 redaction policy. Purge or reset that retained data before screenshots, public
@@ -83,38 +128,44 @@ or identity-like attributes.
 
 ## 5. Observed Metrics
 
-No native Codex metric name is promoted to **Observed locally** in this Phase 0
-ledger. Existing collector and span-derived metrics prove pipeline health, not
-native Codex metric emission. Full verification must use interactive `codex`.
+The fresh interactive run queried Prometheus after a clean exporter flush. No
+metric name matching `codex_*` was present. This supports **Not observed** only
+for Codex CLI `0.139.0`, this interactive run, and this local pipeline. Existing
+collector and span-derived metrics prove pipeline health, not native Codex
+metric emission.
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
 |---|---|---|---|---|---|
-| `codex.api_request` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Validate labels and unit interactively. |
-| `codex.api_request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
-| `codex.sse_event` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | This metric family is distinct from the structured log event of the same name. |
-| `codex.sse_event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
-| `codex.websocket.request` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Discover the normalized Prometheus name and labels. |
-| `codex.websocket.request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
-| `codex.websocket.event` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Discover the normalized Prometheus name and labels. |
-| `codex.websocket.event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm histogram representation, buckets, unit, and labels. |
-| `codex.tool.call` | Native Codex metric | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Do not equate with `codex mcp-server`. |
-| `codex.tool.call.duration_ms` | Native Codex histogram | Documented by official Codex docs; Not tested locally | Metric name only | No, until observed | Confirm buckets, unit, and labels. |
+| `codex.api_request` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | Checked using the valid interactive entrypoint. |
+| `codex.api_request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | No normalized histogram or summary name was found. |
+| `codex.sse_event` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | The structured log event was observed; the native metric was not. |
+| `codex.sse_event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | No normalized histogram or summary name was found. |
+| `codex.websocket.request` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | Checked using the valid interactive entrypoint. |
+| `codex.websocket.request.duration_ms` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | No normalized histogram or summary name was found. |
+| `codex.websocket.event` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | Checked using the valid interactive entrypoint. |
+| `codex.websocket.event.duration_ms` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | No normalized histogram or summary name was found. |
+| `codex.tool.call` | Native Codex metric | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | Tool logs and spans were observed, but no native tool metric was found. |
+| `codex.tool.call.duration_ms` | Native Codex histogram | Documented by official Codex docs; Not observed in fresh run | Metric name only | No | No normalized histogram or summary name was found. |
 | `traces_spanmetrics_*` | Collector-derived metric | Derived signal | Calls and latency from spans | Yes, marked derived | Not evidence that Codex emitted native metrics. |
 | `otelcol_receiver_*` | Collector self-metric | Derived/setup health | Accepted records/points | Yes, health only | Cannot prove semantic correctness of Codex data. |
 
 ## 6. Observed Traces
 
-Traces from the Codex service were previously visible through the local Tempo
-pipeline, but Phase 0 has not captured a sanitized span-name and attribute
-inventory suitable for this ledger. Trace availability is therefore recorded
-as **Observed locally**, while individual span names and attributes remain
-**Not tested**. Future verification must record only non-sensitive schema.
+Tempo traces were isolated by the fresh run's exact `env` resource attribute.
+Thirty-one traces matched; 56 unique span names, six resource attribute keys,
+and 54 span attribute keys were collected without retaining trace IDs or values.
+One oversized trace in the bounded window was skipped before environment
+attribution, so this is a confirmed but potentially incomplete schema inventory.
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
 |---|---|---|---|---|---|
-| Codex trace records | Tempo | Observed locally | `resource.service.name=Codex Desktop` | Yes | Reconfirm with an interactive session. |
-| Individual span names | Tempo | Not tested | `<span-name>` | No, until observed | Do not infer from spanmetrics names alone. |
-| Span duration/status | Tempo | Not tested | OTel duration/status | Only after observation | Standard OTel structure does not establish Codex semantics. |
+| Codex trace records | Tempo | Observed locally | `resource.service.name=Codex Desktop`, resource `env=<isolated-run>` | Yes | 31 environment-matched traces were inspected. |
+| Turn and tool span names | Tempo | Observed locally | `turn/start`, `shell_command`, `handle_tool_call`, `dispatch_tool_call_with_terminal_outcome` | Yes | Exact names observed in the isolated run. |
+| Model transport span names | Tempo | Observed locally | `model_client.stream_responses_websocket`, `responses_websocket.stream_request`, `stream_request` | Yes | Exact names observed in the isolated run. |
+| Resource attribute keys | Tempo | Observed locally | `env`, `service.name`, `service.version`, `telemetry.sdk.language`, `telemetry.sdk.name`, `telemetry.sdk.version` | Yes | Values other than safe service/environment identifiers were not retained. |
+| Safe analytical span keys | Tempo | Observed locally | `tool_name`, `model`, `provider`, `http.method`, `rpc.method`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.usage.cache_read.input_tokens`, `codex.usage.total_tokens` | Yes, with cardinality review | Exact keys observed; values were not copied into this ledger. |
+| Sensitive span keys | Tempo | Observed locally; unsafe by default | `cwd`, `thread.id`, `thread.name`, `thread_id`, `turn.id`, `turn_id`, `call_id`, `submission.id`, `rpc.request_id`, `code.file.path` | No, raw values | Hash or drop before any dashboard grouping or export. |
+| Span timing | Tempo | Observed locally | `startTimeUnixNano`, `endTimeUnixNano` | Yes, derived duration | No `status.code` value was observed in the inspected traces. |
 
 ## 7. Observed Notify Hook Payload Fields
 
@@ -147,8 +198,9 @@ are never emitted.
    input explicitly as **Derived signal**, **Requires helper script**, or sample.
 2. Documentation alone does not make a field dashboard-eligible.
 3. A result from `codex exec` cannot establish native metrics absence.
-4. Raw prompts, assistant messages, input messages, API keys, account IDs,
-   emails, full paths, project/client names, and raw identifiers are ineligible.
+4. Raw prompts, assistant messages, input messages, tool arguments/output, API
+   keys, account IDs, emails, full paths, project/client names, and raw
+   identifiers are ineligible.
 5. Derived cost panels must show their price assumptions and estimation status.
 6. Collector self-metrics and spanmetrics must be labeled as pipeline/derived
    signals, not native Codex metrics.
@@ -185,6 +237,8 @@ Approved seeds for that future verification work are `openai/codex#5085`,
 ## 11. What Must Not Be Inferred
 
 - Do not infer native metric emission from collector self-metrics or spanmetrics.
+- Do not generalize the native-metric non-observation beyond Codex CLI `0.139.0`
+  and this valid interactive run.
 - Do not infer a field exists locally because official docs mention it.
 - Do not infer a field is absent from a `codex exec` metrics test.
 - Do not infer `codex mcp-server` activity from Codex client tool/MCP signals.
@@ -192,3 +246,5 @@ Approved seeds for that future verification work are `openai/codex#5085`,
 - Do not infer exact cost without verified token semantics and current pricing.
 - Do not infer "stuck" from silence alone until a heartbeat/state model exists.
 - Do not infer that hashing makes low-entropy private values anonymous.
+- Do not treat the trace inventory as exhaustive; one oversized trace in the
+  bounded window could not be fetched or attributed.
