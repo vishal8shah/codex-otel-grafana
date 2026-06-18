@@ -24,11 +24,30 @@ These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
 spanmetrics, and `resource.service.name = "Codex Desktop"` in Tempo TraceQL.
 
-To recreate or refresh the dashboards:
+Docker Compose provisions the datasources and dashboards automatically from
+the read-only files under `observability/provisioning/` and
+`observability/dashboards/`.
+
+The PowerShell publisher remains as a legacy manual refresh for the direct-run
+or other non-file-provisioned path, and as a parity comparison/export source:
 
 ```powershell
 .\observability\setup-codex-dashboards.ps1
 ```
+
+To regenerate dashboard JSON for an explicit parity review without publishing
+through the API:
+
+```powershell
+.\observability\setup-codex-dashboards.ps1 `
+  -ExportDirectory .\observability\dashboards `
+  -ExportOnly
+```
+
+Review the resulting JSON diff before committing it; the exporter is not a
+license to change panel or query behavior during provisioning maintenance.
+Compose-managed dashboards deliberately reject API/UI overwrite so repository
+JSON remains authoritative.
 
 The Prometheus dashboard uses collector ingress metrics and Tempo-generated
 spanmetrics. Phase 0b tested native `codex_*` Prometheus metrics with interactive
@@ -62,8 +81,11 @@ Docker Desktop may require a Windows restart or first-run setup before the Docke
 .\observability\start-lgtm.ps1 -Pull
 ```
 
-Use `-Pull` the first time or whenever you want to refresh `grafana/otel-lgtm:latest`.
-The start script mounts `observability\otelcol-config.yaml` when it exists.
+The default image is pinned to the tested `grafana/otel-lgtm:0.28.0` tag. Use
+`-Pull` after deliberately changing the tag. The Compose path mounts the
+collector config, Grafana provisioning files, and dashboard JSON read-only.
+The legacy direct-run script mounts only the collector config and does not
+provide the normal file-provisioned dashboard path.
 
 ## Stop
 
@@ -116,10 +138,18 @@ adds an OpenTelemetry Collector transform processor before export. It drops
 and `prompt` attributes from logs, traces, and metrics before they reach Loki,
 Tempo, or Prometheus.
 
-This does not delete older records already stored in the Docker volume. To purge
-all prior local observability data, stop and remove the container, remove the
-`codex-otel-lgtm-data` Docker volume, start the stack again, and rerun
-`setup-codex-dashboards.ps1`.
+This does not delete older records already stored in the Docker volume. Do not
+remove `codex-otel-lgtm-data` during normal stop/remove or provisioning
+validation. Purging retained telemetry is a separate, explicit operation.
+
+## Image Update Process
+
+The validated image is `grafana/otel-lgtm:0.28.0`, digest
+`sha256:10f48eb2f8670134df542177bb19536c55421b089e43f9dfc2a27d4c078204d8`.
+For an update, pin a candidate tag in `.env.example` and `docker-compose.yml`,
+pull it explicitly, inspect its Grafana provisioning paths, and repeat the full
+retained-volume and isolated clean-volume checks on Windows and WSL2. Restore
+`0.28.0` to roll back. Do not replace the default with `latest`.
 
 ## Verify
 

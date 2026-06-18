@@ -16,9 +16,12 @@ $composeConfig = & docker @composeArgs config --format json | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw "docker compose config failed with exit code $LASTEXITCODE." }
 $ContainerName = $composeConfig.services.lgtm.container_name
 $ComposeProject = $composeConfig.name
-$existingJson = & docker inspect $ContainerName 2>$null
+$existingId = & docker ps -aq --filter "name=^/$ContainerName$"
+if ($LASTEXITCODE -ne 0) { throw "Could not inspect existing Docker containers." }
 
-if ($LASTEXITCODE -eq 0) {
+if ($existingId) {
+    $existingJson = & docker inspect $ContainerName
+    if ($LASTEXITCODE -ne 0) { throw "Could not inspect container '$ContainerName'." }
     $existing = ($existingJson | ConvertFrom-Json)[0]
     $existingProject = $existing.Config.Labels.'com.docker.compose.project'
     if (-not $existingProject) {

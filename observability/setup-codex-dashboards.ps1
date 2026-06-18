@@ -3,7 +3,9 @@ param(
     [string]$User = "admin",
     [string]$Password = "admin",
     [string]$FolderUid = "codex-observability",
-    [string]$ServiceName = "Codex Desktop"
+    [string]$ServiceName = "Codex Desktop",
+    [string]$ExportDirectory,
+    [switch]$ExportOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -130,6 +132,17 @@ function New-DashboardBase {
 function Publish-Dashboard {
     param([hashtable]$Dashboard)
 
+    try {
+        $existing = Invoke-GrafanaApi -Method GET -Path "/api/dashboards/uid/$($Dashboard.uid)"
+        if ($existing.meta.provisioned) {
+            throw "Dashboard '$($Dashboard.uid)' is file-provisioned. Update and review the repository JSON instead of overwriting it through the API."
+        }
+    } catch {
+        if ($_.Exception.Message -like "Dashboard '* is file-provisioned.*") {
+            throw
+        }
+    }
+
     $payload = @{
         dashboard = $Dashboard
         folderUid = $FolderUid
@@ -141,19 +154,25 @@ function Publish-Dashboard {
     Write-Host "$($Dashboard.title): $GrafanaUrl$($result.url)"
 }
 
-try {
-    Invoke-GrafanaApi -Method GET -Path "/api/health" | Out-Null
-} catch {
-    throw "Grafana is not reachable at $GrafanaUrl. Start LGTM first with .\observability\start-lgtm.ps1."
+if ($ExportOnly -and -not $ExportDirectory) {
+    throw "-ExportOnly requires -ExportDirectory."
 }
 
-try {
-    Invoke-GrafanaApi -Method GET -Path "/api/folders/$FolderUid" | Out-Null
-} catch {
-    Invoke-GrafanaApi -Method POST -Path "/api/folders" -Body @{
-        uid = $FolderUid
-        title = "Codex Observability"
-    } | Out-Null
+if (-not $ExportOnly) {
+    try {
+        Invoke-GrafanaApi -Method GET -Path "/api/health" | Out-Null
+    } catch {
+        throw "Grafana is not reachable at $GrafanaUrl. Start LGTM first with .\scripts\start.ps1."
+    }
+
+    try {
+        Invoke-GrafanaApi -Method GET -Path "/api/folders/$FolderUid" | Out-Null
+    } catch {
+        Invoke-GrafanaApi -Method POST -Path "/api/folders" -Body @{
+            uid = $FolderUid
+            title = "Codex Observability"
+        } | Out-Null
+    }
 }
 
 $lokiDs = New-Datasource "loki" "loki"
@@ -302,7 +321,28 @@ $tokens.panels = @(
     ) @{ showTime = $true; showLabels = $true; wrapLogMessage = $true; sortOrder = "Descending" })
 )
 
-Publish-Dashboard $loki
-Publish-Dashboard $tempo
-Publish-Dashboard $prom
-Publish-Dashboard $tokens
+$dashboards = @(
+    @{ FileName = "codex-logs.json"; Dashboard = $loki }
+    @{ FileName = "codex-traces.json"; Dashboard = $tempo }
+    @{ FileName = "codex-prometheus-spanmetrics.json"; Dashboard = $prom }
+    @{ FileName = "codex-token-economics.json"; Dashboard = $tokens }
+)
+
+if ($ExportDirectory) {
+    $resolvedExportDirectory = [IO.Path]::GetFullPath($ExportDirectory)
+    [IO.Directory]::CreateDirectory($resolvedExportDirectory) | Out-Null
+    $utf8NoBom = [Text.UTF8Encoding]::new($false)
+
+    foreach ($item in $dashboards) {
+        $path = Join-Path $resolvedExportDirectory $item.FileName
+        $json = $item.Dashboard | ConvertTo-Json -Depth 100
+        [IO.File]::WriteAllText($path, "$json`n", $utf8NoBom)
+        Write-Host "Exported $path"
+    }
+}
+
+if (-not $ExportOnly) {
+    foreach ($item in $dashboards) {
+        Publish-Dashboard $item.Dashboard
+    }
+}

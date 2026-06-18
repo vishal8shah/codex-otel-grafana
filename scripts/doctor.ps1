@@ -1,15 +1,21 @@
 param(
     [string]$GrafanaUrl = "http://localhost:3000",
     [string]$ContainerName = "codex-otel-lgtm",
-    [string]$CodexConfigPath = (Join-Path $HOME ".codex\config.toml")
+    [string]$CodexConfigPath = (Join-Path $HOME ".codex\config.toml"),
+    [switch]$Strict
 )
 
 $ErrorActionPreference = "Continue"
 $script:Failures = 0
 
-function Write-Check([string]$Name, [bool]$Passed, [string]$Detail) {
-    $state = if ($Passed) { "PASS" } else { "FAIL" }
-    if (-not $Passed) { $script:Failures++ }
+function Write-Check(
+    [string]$Name,
+    [bool]$Passed,
+    [string]$Detail,
+    [bool]$Required = $true
+) {
+    $state = if ($Passed) { "PASS" } elseif ($Required) { "FAIL" } else { "INFO" }
+    if (-not $Passed -and $Required) { $script:Failures++ }
     Write-Host ("[{0}] {1}: {2}" -f $state, $Name, $Detail)
 }
 
@@ -60,9 +66,10 @@ $codex = Get-Command codex -ErrorAction SilentlyContinue
 $codexVersion = if ($codex) { & codex --version 2>$null } else { $null }
 $codexRunnable = [bool]$codex -and ($LASTEXITCODE -eq 0)
 $codexDetail = if ($codexVersion) { $codexVersion } elseif ($codex) { $codex.Source } else { "not found on PATH" }
-Write-Check "Codex CLI" $codexRunnable $codexDetail
+Write-Check "Codex CLI" $codexRunnable $codexDetail $Strict.IsPresent
 
-Write-Check "User Codex config" (Test-Path $CodexConfigPath) $CodexConfigPath
+Write-Check "User Codex config" (Test-Path $CodexConfigPath) $CodexConfigPath $Strict.IsPresent
 
-Write-Host "`nDoctor reports connectivity only. Run schema-verify separately for discovery guidance."
+Write-Host "`nStack health determines the default exit code. Use -Strict to require Codex CLI and config readiness."
+Write-Host "Run schema-verify separately for discovery guidance."
 if ($script:Failures -gt 0) { exit 1 }

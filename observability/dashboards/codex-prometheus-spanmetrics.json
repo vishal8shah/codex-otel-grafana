@@ -1,0 +1,378 @@
+{
+    "schemaVersion":  39,
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "value":  "Codex Desktop",
+                                                        "text":  "Codex Desktop"
+                                                    },
+                                        "name":  "service",
+                                        "type":  "constant",
+                                        "label":  "Service",
+                                        "hide":  0,
+                                        "query":  "Codex Desktop"
+                                    }
+                                ]
+                   },
+    "annotations":  {
+                        "list":  [
+
+                                 ]
+                    },
+    "version":  0,
+    "panels":  [
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  1,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "OTLP logs accepted",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum(increase(otelcol_receiver_accepted_log_records_total{receiver=\"otlp\",transport=\"http\"}[$__range]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  2,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  6
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "OTLP spans accepted",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum(increase(otelcol_receiver_accepted_spans_total{receiver=\"otlp\",transport=\"http\"}[$__range]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  3,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "OTLP metric points accepted",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum(increase(otelcol_receiver_accepted_metric_points_total{receiver=\"otlp\",transport=\"http\"}[$__range]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  4,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  4,
+                                       "x":  18
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "LGTM target health",
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum(up)",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ]
+                                                         }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  5,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Top span throughput",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{span_name}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "topk(12, sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"$service\"}[$__rate_interval])))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  6,
+                       "gridPos":  {
+                                       "y":  4,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Top p95 span latency",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{span_name}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "topk(12, histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"$service\"}[$__rate_interval]))))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "bytes"
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  7,
+                       "gridPos":  {
+                                       "y":  12,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Collector memory",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "RSS",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "otelcol_process_memory_rss",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+
+                                                        },
+                                           "overrides":  {
+
+                                                         }
+                                       },
+                       "id":  8,
+                       "gridPos":  {
+                                       "y":  12,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Exporter failures",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{exporter}}",
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus"
+                                                          },
+                                           "expr":  "sum by (exporter) (rate(otelcol_exporter_send_failed_metric_points_total[$__rate_interval]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  }
+                                   }
+                   }
+               ],
+    "tags":  [
+                 "codex",
+                 "opentelemetry",
+                 "local"
+             ],
+    "time":  {
+                 "to":  "now",
+                 "from":  "now-6h"
+             },
+    "timezone":  "browser",
+    "refresh":  "30s",
+    "title":  "Codex / Prometheus Metrics",
+    "uid":  "codex-prometheus-metrics"
+}

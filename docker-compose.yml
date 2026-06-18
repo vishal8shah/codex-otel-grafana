@@ -1,6 +1,6 @@
 services:
   lgtm:
-    image: ${LGTM_IMAGE:-grafana/otel-lgtm:latest}
+    image: ${LGTM_IMAGE:-grafana/otel-lgtm:0.28.0}
     container_name: ${LGTM_CONTAINER_NAME:-codex-otel-lgtm}
     restart: unless-stopped
     ports:
@@ -13,7 +13,10 @@ services:
     volumes:
       - codex-otel-lgtm-data:/data
       - ./observability/otelcol-config.yaml:/otel-lgtm/otelcol-config.yaml:ro
+      - ./observability/provisioning/datasources/datasources.yml:/otel-lgtm/grafana/conf/provisioning/datasources/grafana-datasources.yaml:ro
+      - ./observability/provisioning/dashboards/dashboards.yml:/otel-lgtm/grafana/conf/provisioning/dashboards/codex-dashboards.yaml:ro
+      - ./observability/dashboards:/otel-lgtm/codex-dashboards:ro
 
 volumes:
   codex-otel-lgtm-data:
-    name: codex-otel-lgtm-data
+    name: ${LGTM_DATA_VOLUME:-codex-otel-lgtm-data}
