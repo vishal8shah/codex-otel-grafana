@@ -22,6 +22,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex Stuck Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
 - Codex Tool Failure Diagnosis: http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis
 - Codex API Request Reliability: http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability
+- Codex Slow Contributor Triage: http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -165,6 +166,29 @@ python tools/api-reliability/api_reliability.py --emit-derived
 The dashboard never uses or emits native `codex_*` metrics. See
 `tools/api-reliability/README.md` for endpoint hashing, state semantics, and the
 focused proof path.
+
+## Codex Slow Contributor Triage
+
+This dashboard uses derived `codex.slow_contributor` logs from
+`tools/slow-contributor/slow_contributor.py`. It counts unique slow contributor
+groups, unique API groups, and unique tool groups, then shows a privacy-safe
+triage table. Repeated emissions add snapshots but do not inflate the stats.
+
+The schema gate admits only `codex.api_request.duration_ms` grouped by
+`run_hash + endpoint_hash` and `codex.tool_result.duration_ms` grouped by
+`run_hash + tool_name`. TTFT payload fields, end-to-end turn duration, and
+quiet/incomplete heuristics are excluded. The default 10,000 ms thresholds are
+configurable local investigation aids, not SLOs.
+
+```text
+python tools/slow-contributor/slow_contributor.py --dry-run
+python tools/slow-contributor/slow_contributor.py --emit-derived
+```
+
+This diagnostic identifies slow confirmed contributors in the selected window.
+It does not measure full end-to-end Codex turn latency and does not prove a
+Codex service bug. See `tools/slow-contributor/README.md` for the eligibility
+table, privacy boundary, and proof path.
 
 ## Start
 

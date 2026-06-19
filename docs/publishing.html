@@ -9,7 +9,7 @@
         <p class="lead">The public site is static HTML, shared CSS, and shared JavaScript under <code>/docs</code>. GitHub Pages can serve it without a build system.</p>
         <h2 id="checklist">Before publishing</h2>
         <pre>rg -n "api_key|secret|password|authorization|bearer|user_email|user_account_id" docs README.md</pre>
-        <ul><li>No secrets, raw prompts, identities, conversation identifiers, call identifiers, raw endpoints, paths, tool arguments, or tool output.</li><li>No decorative dashboard totals, fixed cost results, or unverified issue references.</li><li>Every diagnostic is tagged Shipped, Next, Backlog, Acknowledged, Partial, or Not claimed.</li><li>Codex Stuck Triage, Tool Failure Diagnosis, and API Request Reliability are the shipped issue-led diagnostics.</li><li>Token burn without completion is explicitly not claimed.</li></ul>
+        <ul><li>No secrets, raw prompts, identities, conversation identifiers, call identifiers, raw endpoints, paths, tool arguments, or tool output.</li><li>No decorative dashboard totals, fixed cost results, or unverified issue references.</li><li>Every diagnostic is tagged Shipped, Next, Backlog, Acknowledged, Partial, or Not claimed.</li><li>Stuck, tool, API, and slow-contributor triage are shipped issue-led diagnostics.</li><li>Token burn without completion and full end-to-end turn latency are explicitly not claimed.</li></ul>
         <h2>GitHub Pages settings</h2>
         <div class="article-card"><p>Use <strong>Deploy from a branch</strong>, branch <strong>main</strong>, folder <strong>/docs</strong>. The home page is <code>docs/index.html</code>.</p></div>
         <h2 id="social">Suggested public summary</h2>
@@ -17,7 +17,7 @@
 
 This local-first diagnostic kit turns schema-confirmed Codex telemetry into privacy-safe evidence.
 
-Phase 2 ships Codex Stuck Triage, Phase 3 ships Tool Failure Diagnosis, and Phase 4 ships API Request Reliability. Slow-turn Contributor Triage is the next backlog cycle; other failure classes remain clearly labelled backlog or not claimed.</pre>
+Phases 2-5 ship Stuck Triage, Tool Failure Diagnosis, API Request Reliability, and Slow Contributor Triage. The slow view covers confirmed API/tool contributors, not full-turn latency. Review/resume flow diagnosis is the next backlog cycle.</pre>
       </div>
     </main>
   </div><script src="assets/site.js"></script></body>

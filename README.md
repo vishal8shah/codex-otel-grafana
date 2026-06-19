@@ -36,6 +36,7 @@ It captures the setup we verified locally:
   `run_hash` values
 - A focused Tool Failure Diagnosis panel and playbook using confirmed tool logs
 - A focused API Request Reliability panel and playbook using confirmed API logs
+- A focused Slow Contributor Triage panel using confirmed API/tool durations
 
 ## Dashboards
 
@@ -48,6 +49,7 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex Stuck Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
 - [Codex Tool Failure Diagnosis](http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis)
 - [Codex API Request Reliability](http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability)
+- [Codex Slow Contributor Triage](http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage)
 
 ## Capability Matrix
 
@@ -58,6 +60,7 @@ After setup, open Grafana with `admin` / `admin`:
 | Tool dispatch uncertainty | **Partial** | Window-bounded selected-without-result evidence ships inside Tool Failure Diagnosis; broad dispatch proof is not claimed. |
 | Review/resume flow stalls | **Acknowledged** | No claim until required signals are confirmed in `SCHEMA.md`. |
 | API/backend reliability | **Shipped** | API Request Reliability groups confirmed request evidence by privacy-safe run and endpoint hashes. |
+| Slow confirmed contributors | **Shipped** | Slow Contributor Triage uses confirmed API and tool durations; it does not measure full turn latency. |
 | Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
 
 Token burn without completion was removed from Phase 2 because the required raw
@@ -190,6 +193,42 @@ unique `run_hash + endpoint_hash` groups over the selected range. See
 [the analyzer guide](tools/api-reliability/README.md) for the full privacy and
 state model.
 
+## Codex Slow Contributor Triage
+
+This focused analyzer identifies API request and tool result groups whose
+schema-confirmed duration exceeds a configurable local threshold. API groups
+use `run_hash + endpoint_hash`; tool groups use `run_hash + tool_name`.
+
+```text
+.\scripts\slow-contributor.ps1
+.\scripts\slow-contributor.ps1 -EmitDerived
+./scripts/slow-contributor.sh
+./scripts/slow-contributor.sh --emit-derived
+```
+
+The shipped states are `SLOW_API_CONTRIBUTOR`, `SLOW_TOOL_CONTRIBUTOR`, and
+`MULTIPLE_SLOW_CONTRIBUTORS`. Both default thresholds are 10,000 ms and are
+local investigation thresholds, not SLOs. `codex.turn_ttft` remains only an
+observed event name because its payload is not confirmed in `SCHEMA.md`;
+unconfirmed end-to-end duration and quiet/incomplete heuristics are excluded.
+
+### Slow Contributor Playbook
+
+- **Symptom:** Codex feels slow or appears to spend too long between user
+  request and useful response.
+- **Panel:** **Codex Slow Contributor Triage**.
+- **Meaning:** a privacy-safe derived record shows one or more slow confirmed
+  contributors, currently API request duration or tool result duration. This
+  does not measure full end-to-end turn latency.
+- **Next action:** inspect contributor type, duration, threshold, run hash,
+  endpoint hash or tool name, and source window. Treat it as investigation
+  evidence, not proof of total turn latency or a Codex service bug.
+
+Derived `codex.slow_contributor` records are not native Codex telemetry.
+Repeated emissions may create table snapshots; stats count unique contributor
+groups over the selected range. See
+[the schema gate and analyzer guide](tools/slow-contributor/README.md).
+
 ## Quick Start
 
 Copy `.env.example` to `.env` only if you need to change the safe local
@@ -204,7 +243,9 @@ adding appropriate security controls.
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
 .\scripts\run-health.ps1
+.\scripts\tool-failure.ps1
 .\scripts\api-reliability.ps1
+.\scripts\slow-contributor.ps1
 codex
 ```
 
@@ -218,7 +259,9 @@ Windows users who need the original direct `docker run` path.
 ./scripts/doctor.sh
 ./scripts/schema-verify.sh
 ./scripts/run-health.sh
+./scripts/tool-failure.sh
 ./scripts/api-reliability.sh
+./scripts/slow-contributor.sh
 codex
 ```
 
@@ -226,6 +269,13 @@ Start, stop, datasource provisioning, and dashboard provisioning are
 cross-platform. Docker Compose mounts the repository-owned Grafana provisioning
 files and dashboards read-only, so macOS and Linux do not need `pwsh` for the
 normal setup path.
+
+### CI scope
+
+GitHub Actions currently provides static and unit validation. It does not stand
+up the LGTM stack or prove OTLP to Loki/Grafana dashboard runtime behavior.
+Per-diagnostic runtime proof remains a manual gate until a future integration
+workflow is added.
 
 ### Docker Compose directly
 
