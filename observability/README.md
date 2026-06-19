@@ -21,6 +21,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex / Token Economics: http://localhost:3000/d/codex-token-economics/codex-token-economics
 - Codex Stuck Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
 - Codex Tool Failure Diagnosis: http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis
+- Codex API Request Reliability: http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -134,6 +135,28 @@ winget install -e --id Docker.DockerDesktop --accept-source-agreements --accept-
 ```
 
 Docker Desktop may require a Windows restart or first-run setup before the Docker CLI works.
+
+## Codex API Request Reliability
+
+This dashboard uses only derived `codex.api_diagnostic` logs from
+`tools/api-reliability/api_reliability.py`. It provides three unique-group stats
+and one privacy-safe triage table. Stats deduplicate repeated emissions by
+`run_hash + endpoint_hash`; the table remains a snapshot view.
+
+Raw endpoint and conversation values are hashed and dropped before derived
+emission. No per-request identifier is confirmed, so this is run/endpoint-level
+evidence rather than proof about one request or a Codex service bug. State
+precedence is failed, retried, slow, successful, then unknown. The configurable
+slow threshold is for local investigation, not an SLO.
+
+```text
+python tools/api-reliability/api_reliability.py --dry-run
+python tools/api-reliability/api_reliability.py --emit-derived
+```
+
+The dashboard never uses or emits native `codex_*` metrics. See
+`tools/api-reliability/README.md` for endpoint hashing, state semantics, and the
+focused proof path.
 
 ## Start
 

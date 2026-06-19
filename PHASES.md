@@ -14,11 +14,15 @@
 5. **Phase 3: Codex Tool Failure Diagnosis — shipped**
    Adds one focused diagnostic using confirmed tool decision/result logs,
    privacy-safe `run_hash`, and clearly derived `codex.tool_diagnostic` records.
+6. **Phase 4: Codex API Request Reliability — shipped**
+   Adds one focused diagnostic using confirmed `codex.api_request` logs,
+   privacy-safe run/endpoint hashes, and derived `codex.api_diagnostic` records.
 
 ## Next One-Pain Cycle
 
-**Slow-turn diagnosis** is next in the backlog. It remains unbuilt until its
-source fields, privacy boundary, and end-to-end evidence path are confirmed.
+**Slow-turn Contributor Triage** is next in the backlog. It remains unbuilt
+until its source fields, privacy boundary, and end-to-end evidence path are
+confirmed.
 
 Token burn without completion is not part of Phase 2. It was removed because
 the required source shape was not schema-backed.

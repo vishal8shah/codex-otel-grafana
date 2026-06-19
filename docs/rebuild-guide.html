@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quickstart | Codex Diagnostic Kit</title><link rel="stylesheet" href="assets/site.css"></head>
   <body><div class="app-shell">
-    <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">&#9670;</span><span>Codex Diagnostic Kit</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link active" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Run locally</p><a class="nav-sub" href="#start">Start</a><a class="nav-sub" href="#codex">Codex config</a><a class="nav-sub" href="#triage">Stuck triage</a><a class="nav-sub" href="#tool-failure">Tool failure</a><a class="nav-sub" href="#stop">Stop</a></div></nav><div class="help-card"><strong>Safe first run</strong><p>Use a tiny non-sensitive interactive prompt, then inspect only eligible fields.</p></div></aside>
+    <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">&#9670;</span><span>Codex Diagnostic Kit</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link active" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Run locally</p><a class="nav-sub" href="#start">Start</a><a class="nav-sub" href="#codex">Codex config</a><a class="nav-sub" href="#triage">Stuck triage</a><a class="nav-sub" href="#tool-failure">Tool failure</a><a class="nav-sub" href="#api-reliability">API reliability</a><a class="nav-sub" href="#stop">Stop</a></div></nav><div class="help-card"><strong>Safe first run</strong><p>Use a tiny non-sensitive interactive prompt, then inspect only eligible fields.</p></div></aside>
     <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..." aria-label="Search docs"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
       <div class="content article" data-search>
         <p class="eyebrow">Cross-platform local setup</p><h1>Quickstart and manual rebuild</h1>
@@ -37,6 +37,12 @@ metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics"
 .\scripts\tool-failure.ps1 -EmitDerived</pre></article><article class="article-card"><h3>macOS / Linux</h3><pre>./scripts/tool-failure.sh
 ./scripts/tool-failure.sh --emit-derived</pre></article></div>
         <p>Open <strong>Grafana &gt; Codex Tool Failure Diagnosis</strong> to inspect privacy-safe tool/run evidence.</p>
+
+        <h2 id="api-reliability">Run Codex API Request Reliability</h2>
+        <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>.\scripts\api-reliability.ps1
+.\scripts\api-reliability.ps1 -EmitDerived</pre></article><article class="article-card"><h3>macOS / Linux</h3><pre>./scripts/api-reliability.sh
+./scripts/api-reliability.sh --emit-derived</pre></article></div>
+        <p>Open <strong>Grafana &gt; Codex API Request Reliability</strong>. Stats count unique run/endpoint groups; the table may show repeated derived snapshots.</p>
 
         <h2>Verify source signals</h2>
         <div class="grid-3"><article class="article-card"><h3>Loki</h3><pre>{service_name="Codex Desktop"}</pre></article><article class="article-card"><h3>Tempo</h3><pre>{ resource.service.name = "Codex Desktop" }</pre></article><article class="article-card"><h3>Pipeline metrics</h3><pre>traces_spanmetrics_calls_total{service="Codex Desktop"}</pre><p class="muted">Collector-derived only; not native Codex metrics.</p></article></div>

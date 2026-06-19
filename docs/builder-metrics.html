@@ -15,7 +15,7 @@
           <tr><td>MCP/tool startup hangs and failed results</td><td><span class="status-badge shipped">Shipped</span></td><td>Tool Failure Diagnosis uses confirmed tool decision/result evidence.</td></tr>
           <tr><td>Tool dispatch uncertainty</td><td><span class="status-badge partial">Partial</span></td><td>Selected-without-result is window-bounded evidence, not proof that dispatch failed.</td></tr>
           <tr><td>Review/resume flow stalls</td><td><span class="status-badge acknowledged">Acknowledged</span></td><td>No claim until the required signals are confirmed.</td></tr>
-          <tr><td>API/backend reliability</td><td><span class="status-badge backlog">Backlog</span></td><td>Request events are evidence inputs; a reliability diagnostic has not shipped.</td></tr>
+          <tr><td>API/backend reliability</td><td><span class="status-badge shipped">Shipped</span></td><td>API Request Reliability groups confirmed request evidence by privacy-safe run and endpoint hashes.</td></tr>
           <tr><td>Token/cost ambiguity</td><td><span class="status-badge partial">Partial</span></td><td>Completed-run token economics is distinct from token burn without completion.</td></tr>
         </tbody></table>
 
@@ -27,10 +27,10 @@
         <p class="callout">Token burn without completion is not a shipped diagnostic. It was removed because the required non-completion token shape was not confirmed in <code>SCHEMA.md</code>.</p>
 
         <h2 id="roadmap">Status-tagged roadmap</h2>
-        <div class="grid-2"><article class="article-card"><span class="status-badge shipped">Phase 3</span><h3>Tool Failure Diagnosis</h3><p>Uses only confirmed tool decisions, results, names, outcomes, and result durations where available.</p></article><article class="article-card"><span class="status-badge next">Next backlog cycle</span><h3>Slow-turn diagnosis</h3><p>Remains unbuilt until its source fields and end-to-end evidence path are confirmed.</p></article></div>
+        <div class="grid-2"><article class="article-card"><span class="status-badge shipped">Phase 4</span><h3>API Request Reliability</h3><p>Uses confirmed request outcome, duration, status, attempt, and endpoint evidence with raw endpoints hashed.</p></article><article class="article-card"><span class="status-badge next">Next backlog cycle</span><h3>Slow-turn Contributor Triage</h3><p>Remains unbuilt until its source fields and end-to-end evidence path are confirmed.</p></article></div>
 
-        <h2>Shipped playbook</h2>
-        <table><thead><tr><th>Symptom</th><th>Panel</th><th>Meaning and action</th></tr></thead><tbody><tr><td>Codex appears quiet, incomplete, or possibly stuck.</td><td>Codex Stuck Triage</td><td>Inspect the privacy-safe hash, state, quiet time, last event, model, and source window. Treat the result as a candidate, not proof of a Codex bug.</td></tr><tr><td>A selected tool failed, stalled, or produced no useful result.</td><td>Codex Tool Failure Diagnosis</td><td>Inspect the tool/run aggregate, result state, duration, and source window. It is evidence for investigation, not proof about one specific call.</td></tr></tbody></table>
+        <h2>Shipped playbooks</h2>
+        <table><thead><tr><th>Symptom</th><th>Panel</th><th>Meaning and action</th></tr></thead><tbody><tr><td>Codex appears quiet, incomplete, or possibly stuck.</td><td>Codex Stuck Triage</td><td>Inspect the privacy-safe hash, state, quiet time, last event, model, and source window. Treat the result as a candidate, not proof of a Codex bug.</td></tr><tr><td>A selected tool failed, stalled, or produced no useful result.</td><td>Codex Tool Failure Diagnosis</td><td>Inspect the tool/run aggregate, result state, duration, and source window. It is evidence for investigation, not proof about one specific call.</td></tr><tr><td>Codex feels slow, unreliable, or fails around model/backend activity.</td><td>Codex API Request Reliability</td><td>Inspect the run/endpoint aggregate, state, duration, status bucket, retry evidence, and source window. Treat it as investigation evidence, not proof of a service bug.</td></tr></tbody></table>
       </div>
     </main>
   </div><script src="assets/site.js"></script></body>
