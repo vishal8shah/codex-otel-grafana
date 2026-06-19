@@ -45,6 +45,9 @@ jobs:
           print(f"Validated {len(files)} dashboard JSON files")
           PY
 
+      - name: Validate Diagnostic Command Center contracts
+        run: python scripts/validate-command-center.py
+
       - name: Validate alert provisioning
         run: |
           python - <<'PY'

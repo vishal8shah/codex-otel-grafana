@@ -26,6 +26,10 @@
    This proves the push path, but not a fully trustworthy relied-on mid-session
    monitor. A future phase should consider watcher heartbeat, no-data
    visibility, or alert-path health checks.
+9. **Phase 7: Codex Diagnostic Command Center — shipped**
+   Adds one privacy-safe navigation front door over existing derived diagnostic
+   streams for users who already have the local kit running. It adds no new
+   classifier, alert family, onboarding flow, or production-monitoring claim.
 
 ## Next One-Pain Cycle
 

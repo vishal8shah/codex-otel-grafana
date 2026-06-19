@@ -23,6 +23,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex Tool Failure Diagnosis: http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis
 - Codex API Request Reliability: http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability
 - Codex Slow Contributor Triage: http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage
+- Codex Diagnostic Command Center: http://localhost:3000/d/codex-diagnostic-command-center/codex-diagnostic-command-center
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -70,6 +71,20 @@ spanmetrics. Phase 0b tested native `codex_*` Prometheus metrics with interactiv
 Codex `0.139.0`, but did not observe them in this local LGTM stack. Dashboards
 should rely on the observed Loki logs and Tempo traces unless native metrics are
 later observed.
+
+## Codex Diagnostic Command Center
+
+The Command Center is a light navigation front door for users who already have
+the local kit running. It queries only existing `codex.run_health`,
+`codex.tool_diagnostic`, `codex.api_diagnostic`, and `codex.slow_contributor`
+derived logs. It deduplicates issue groups at the same privacy-safe grains used
+by the focused dashboards and links to each detailed view with the selected
+lookback. The default six-hour lookback matches all four detailed dashboards.
+
+It does not classify raw telemetry, add an analyzer state, replace Phase 6
+notification, solve setup/onboarding, or provide production monitoring. Zero or
+missing derived evidence does not prove health. Run the relevant analyzers and
+watchers when fresh derived snapshots are required.
 
 The token economics dashboard uses Loki completion records and includes estimated
 USD panels for total cost, input cost, output cost, cache savings, and cost
