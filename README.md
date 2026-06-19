@@ -106,6 +106,13 @@ and `codex.tool_result` logs by privacy-safe `run_hash` plus `tool_name`. It
 classifies failed results, successful results, decisions with no observed result
 in the selected window, and result activity with unknown success evidence.
 
+The grouping level is deliberately `run_hash + tool_name`. Raw `call_id` is an
+unsafe identifier, so it is neither exported nor used in derived records. This
+makes the diagnostic tool/run-level evidence, not proof about an individual
+call. `SELECTED_NO_RESULT` means no result was observed for that tool/run
+aggregate in the selected window; it is suspicious evidence, not proof that a
+specific call failed to dispatch or return.
+
 ```text
 .\scripts\tool-failure.ps1
 .\scripts\tool-failure.ps1 -EmitDerived
@@ -130,6 +137,10 @@ Raw call IDs, arguments, output, prompts, identities, and local paths are never
 emitted. Model/provider are omitted because a safe same-record correlation is
 not confirmed for these tool logs. See
 [the analyzer guide](tools/tool-failure/README.md).
+
+Repeated analyzer emissions can create repeated snapshot rows in the table and
+log panels. The stat panels deduplicate by unique `run_hash + tool_name` pairs
+or unique tool names over the selected range.
 
 ## Quick Start
 

@@ -69,7 +69,7 @@
             <div class="section-head"><h2>What is proven now</h2><a href="architecture-and-operations.html">Inspect the signal path &#8594;</a></div>
             <div class="grid-2">
               <article class="panel pad proof-list"><h3>Local foundation</h3><ul><li>Local LGTM stack</li><li>File-provisioned Grafana dashboards</li><li>Schema-confirmed raw Codex telemetry review</li><li>Collector-side privacy controls</li></ul></article>
-              <article class="panel pad proof-list"><h3>Shipped diagnostic</h3><ul><li>Privacy-safe <code>run_hash</code></li><li>Clearly derived <code>codex.run_health</code></li><li>Codex Stuck Triage dashboard</li><li>Unique <code>run_hash</code> stat counting over the selected range</li></ul></article>
+              <article class="panel pad proof-list"><h3>Shipped diagnostics</h3><ul><li>Privacy-safe <code>run_hash</code></li><li>Clearly derived <code>codex.run_health</code> and <code>codex.tool_diagnostic</code></li><li>Codex Stuck Triage and Codex Tool Failure Diagnosis dashboards</li><li>Unique <code>run_hash</code> and <code>run_hash + tool_name</code> stat counting over the selected range</li></ul></article>
             </div>
           </section>
 
@@ -79,7 +79,7 @@
 
           <section id="playbook" class="section" data-search>
             <div class="section-head"><div><p class="eyebrow">Shipped playbook</p><h2>Codex appears quiet, incomplete, or possibly stuck</h2></div></div>
-            <div class="panel playbook-table"><table><thead><tr><th>Panel</th><th>Meaning</th><th>Next action</th></tr></thead><tbody><tr><td>Codex Stuck Triage</td><td>A privacy-safe derived record shows no completion and quiet time beyond the stuck threshold, based on confirmed raw telemetry.</td><td>Inspect <code>run_hash</code>, <code>state</code>, <code>quiet_for_seconds</code>, <code>last_event</code>, <code>model</code>, and the source time window. Treat it as a stuck candidate, not proof of a Codex bug.</td></tr></tbody></table></div>
+            <div class="panel playbook-table"><table><thead><tr><th>Panel</th><th>Meaning</th><th>Next action</th></tr></thead><tbody><tr><td>Codex Stuck Triage</td><td>A privacy-safe derived record shows no completion and quiet time beyond the stuck threshold, based on confirmed raw telemetry.</td><td>Inspect <code>run_hash</code>, <code>state</code>, <code>quiet_for_seconds</code>, <code>last_event</code>, <code>model</code>, and the source time window. Treat it as a stuck candidate, not proof of a Codex bug.</td></tr><tr><td>Codex Tool Failure Diagnosis</td><td>A privacy-safe tool/run aggregate shows a failed, incomplete, or suspicious result pattern from confirmed tool telemetry.</td><td>Inspect <code>run_hash</code>, <code>tool_name</code>, result state, duration, and source window. Check setup, availability, permissions, and runtime assumptions. Treat it as investigation evidence, not individual-call proof.</td></tr></tbody></table></div>
           </section>
 
           <section class="section" data-search>

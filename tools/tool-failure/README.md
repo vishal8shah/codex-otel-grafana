@@ -23,6 +23,10 @@ Raw call identifiers, arguments, output, paths, prompts, identity fields, model,
 and provider are not copied or joined. Model/provider are not confirmed as a
 safe same-record correlation for these tool logs.
 
+The diagnostic groups by privacy-safe run_hash + tool_name. Raw call_id is an
+unsafe identifier, so it is deliberately not exported or used in derived
+records. The result is tool/run-level evidence, not individual-call proof.
+
 ## Run
 
     .\scripts\tool-failure.ps1
@@ -44,8 +48,10 @@ Without it, the analyzer warns and uses plain SHA-256.
   result was observed in the selected window.
 - UNKNOWN_RESULT: tool activity exists, but result evidence is incomplete.
 
-SELECTED_NO_RESULT is window-bounded evidence, not proof that dispatch failed.
-Truncated or narrowly filtered queries can also omit a result.
+SELECTED_NO_RESULT means no result was observed for that tool/run aggregate in
+the selected window. It is suspicious evidence, not proof that a specific tool
+call failed to dispatch or failed to return. Truncated or narrowly filtered
+queries can also omit a result.
 
 ## Minimal validation trigger
 
@@ -82,3 +88,8 @@ tool arguments, or tool output.
 The analyzer emits OTLP logs only. It does not emit or register native Codex
 Prometheus metrics, read Tempo, diagnose APIs, analyze slow turns, or create a
 broad tool reliability suite.
+
+Repeated analyzer emissions can create repeated snapshot rows in the dashboard
+table and log panel. Stat panels count unique run_hash + tool_name pairs or
+unique tool names over the selected range, so repeated snapshots do not inflate
+those counts.

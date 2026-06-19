@@ -119,7 +119,11 @@ python tools/tool-failure/tool_failure.py --emit-derived
 ```
 
 The dashboard is evidence for investigation. `SELECTED_NO_RESULT` is bounded by
-the selected query window and is not proof that Codex failed to dispatch a tool.
+the selected query window and means no result was observed for that
+`run_hash + tool_name` aggregate. Raw `call_id` is deliberately excluded, so
+this is tool/run-level evidence, not proof that a specific call failed to
+dispatch or return. Repeated analyzer emissions may produce repeated snapshot
+rows, while stat panels count unique tool/run pairs or unique tool names.
 
 ## Prerequisites
 
