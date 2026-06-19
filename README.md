@@ -243,6 +243,7 @@ adding appropriate security controls.
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
 .\scripts\run-health.ps1
+.\scripts\tool-failure.ps1
 .\scripts\api-reliability.ps1
 .\scripts\slow-contributor.ps1
 codex
@@ -258,6 +259,7 @@ Windows users who need the original direct `docker run` path.
 ./scripts/doctor.sh
 ./scripts/schema-verify.sh
 ./scripts/run-health.sh
+./scripts/tool-failure.sh
 ./scripts/api-reliability.sh
 ./scripts/slow-contributor.sh
 codex
@@ -267,6 +269,13 @@ Start, stop, datasource provisioning, and dashboard provisioning are
 cross-platform. Docker Compose mounts the repository-owned Grafana provisioning
 files and dashboards read-only, so macOS and Linux do not need `pwsh` for the
 normal setup path.
+
+### CI scope
+
+GitHub Actions currently provides static and unit validation. It does not stand
+up the LGTM stack or prove OTLP to Loki/Grafana dashboard runtime behavior.
+Per-diagnostic runtime proof remains a manual gate until a future integration
+workflow is added.
 
 ### Docker Compose directly
 
