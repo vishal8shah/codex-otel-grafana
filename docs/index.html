@@ -14,7 +14,7 @@
         <nav>
           <div class="nav-section"><a class="nav-link active" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div>
           <div class="nav-section"><p class="nav-heading">Evidence</p><a class="nav-sub" href="#pain-map">Real pain map</a><a class="nav-sub" href="#proven">Proven now</a><a class="nav-sub" href="#timeline">Proof timeline</a><a class="nav-sub" href="#claims">Claim boundaries</a></div>
-          <div class="nav-section"><p class="nav-heading">Guides</p><a class="nav-sub" href="architecture-and-operations.html">Architecture</a><a class="nav-sub" href="builder-metrics.html">Diagnostics status</a><a class="nav-sub" href="#playbook">Shipped playbook</a><a class="nav-sub" href="publishing.html">Publishing</a></div>
+          <div class="nav-section"><p class="nav-heading">Guides</p><a class="nav-sub" href="architecture-and-operations.html">Architecture</a><a class="nav-sub" href="builder-metrics.html">Diagnostics status</a><a class="nav-sub" href="#playbook">Shipped playbooks</a><a class="nav-sub" href="publishing.html">Publishing</a></div>
         </nav>
         <div class="help-card"><strong>One pain per cycle</strong><p>Ship only when the diagnostic path is backed by confirmed telemetry.</p></div>
       </aside>
@@ -38,7 +38,7 @@
               <h3>Phase 2: Codex Stuck Triage</h3>
               <p>A privacy-safe derived view of runs with no observed completion and quiet time beyond a threshold.</p>
               <ul><li>Grouped by <code>run_hash</code></li><li>Confirmed raw log fields only</li><li>Candidate evidence, not proof of a product bug</li></ul>
-              <a href="#playbook">Open the shipped playbook &#8594;</a>
+              <a href="#playbook">Open the shipped playbooks &#8594;</a>
             </aside>
           </section>
 
@@ -78,7 +78,7 @@
           </section>
 
           <section id="playbook" class="section" data-search>
-            <div class="section-head"><div><p class="eyebrow">Shipped playbook</p><h2>Codex appears quiet, incomplete, or possibly stuck</h2></div></div>
+            <div class="section-head"><div><p class="eyebrow">Diagnostic playbooks</p><h2>Shipped playbooks</h2></div></div>
             <div class="panel playbook-table"><table><thead><tr><th>Panel</th><th>Meaning</th><th>Next action</th></tr></thead><tbody><tr><td>Codex Stuck Triage</td><td>A privacy-safe derived record shows no completion and quiet time beyond the stuck threshold, based on confirmed raw telemetry.</td><td>Inspect <code>run_hash</code>, <code>state</code>, <code>quiet_for_seconds</code>, <code>last_event</code>, <code>model</code>, and the source time window. Treat it as a stuck candidate, not proof of a Codex bug.</td></tr><tr><td>Codex Tool Failure Diagnosis</td><td>A privacy-safe tool/run aggregate shows a failed, incomplete, or suspicious result pattern from confirmed tool telemetry.</td><td>Inspect <code>run_hash</code>, <code>tool_name</code>, result state, duration, and source window. Check setup, availability, permissions, and runtime assumptions. Treat it as investigation evidence, not individual-call proof.</td></tr></tbody></table></div>
           </section>
 
