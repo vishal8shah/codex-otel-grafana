@@ -37,7 +37,10 @@ local development webhook contact point. Grafana evaluates only derived
 `codex.run_health` records; use `scripts/watch-stuck.ps1 -EmitDerived` or
 `scripts/watch-stuck.sh --emit-derived` to keep those records fresh. The watcher
 is opt-in and does not start with the stack. Start
-`tools/alerting/dev_webhook_listener.py` before runtime proof. See its README for
+`tools/alerting/dev_webhook_listener.py --host 0.0.0.0` before Docker runtime
+proof. The listener itself defaults to `127.0.0.1`; the explicit wider bind is
+needed only because Grafana reaches the host through `host.docker.internal`.
+See its README for
 the two-minute lookback, four-hour repeat interval, privacy boundary, and full
 dependency chain.
 

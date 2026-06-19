@@ -97,7 +97,7 @@ raw Codex telemetry itself. Keep the existing analyzer emitting fresh derived
 `codex.run_health` snapshots with the opt-in watcher:
 
 ```text
-python tools/alerting/dev_webhook_listener.py
+python tools/alerting/dev_webhook_listener.py --host 0.0.0.0
 .\scripts\watch-stuck.ps1 -EmitDerived
 ./scripts/watch-stuck.sh --emit-derived
 ```
@@ -106,6 +106,14 @@ Dry-run is the watcher default; use Ctrl+C to stop it. It is not silently
 started with the LGTM stack. The provisioned development contact point routes
 to the local receiver only. Slack, email, and production webhooks remain
 user-configured.
+
+The listener defaults to `127.0.0.1`. Docker/Grafana proof widens it explicitly
+to `0.0.0.0` because the container reaches the host through
+`host.docker.internal`; loopback-only binding cannot receive that delivery.
+This is temporary development-proof widening, not production exposure. On
+Windows, allow any Defender Firewall prompt only for the private profile, avoid
+public networks, scope access to the Docker subnet when practical, time-box the
+proof, and stop the listener afterwards.
 
 The alert uses a tight two-minute lookback and one alert instance per unique
 privacy-safe `run_hash`. A completed snapshot stops new stuck emissions, but an
@@ -117,6 +125,11 @@ Notification requires the complete chain: LGTM/Grafana running, Codex telemetry
 arriving, watcher/analyzer emitting derived records, provisioned alert rule,
 configured contact point/routing, and a reachable destination. If any link is
 missing, silence does not prove Codex is healthy.
+
+The provisioned `noDataState=OK` and `execErrState=OK` settings are fail-open by
+design for development proof. Silence may mean healthy, but it can also mean the
+analyzer stopped, Loki/query evaluation failed, provisioning or routing failed,
+or the destination was unreachable.
 
 ### Shipped Playbook
 

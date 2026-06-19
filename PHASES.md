@@ -23,6 +23,9 @@
 8. **Phase 6: Codex Stuck Candidate Notification — shipped**
    Adds one opt-in watcher and development-safe Grafana notification path for
    recent privacy-safe `STUCK_CANDIDATE` derived evidence.
+   This proves the push path, but not a fully trustworthy relied-on mid-session
+   monitor. A future phase should consider watcher heartbeat, no-data
+   visibility, or alert-path health checks.
 
 ## Next One-Pain Cycle
 

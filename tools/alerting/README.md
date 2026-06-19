@@ -10,7 +10,7 @@ derived snapshots that the alert rule evaluates.
 Start the receiver before starting or recreating the stack:
 
 ```text
-python tools/alerting/dev_webhook_listener.py
+python tools/alerting/dev_webhook_listener.py --host 0.0.0.0
 docker compose up -d
 ```
 
@@ -25,12 +25,18 @@ Dry-run is the watcher default. The interval defaults to 60 seconds and can be
 changed with `-IntervalSeconds 120` or `--interval-seconds 120`. Press Ctrl+C to
 stop. The watcher is never silently started with the stack.
 
-The listener binds to `0.0.0.0:9087` so the local Grafana container can reach
-it through `host.docker.internal`. It accepts only `POST /grafana-alerts`, stores
-only an allowlisted privacy-reduced record under the gitignored
-`alert-receiver-output/` directory, and rejects payloads containing known unsafe
-keys. This is a local development receiver, not a production endpoint; keep the
-port behind the local machine firewall and stop it after proof.
+The listener defaults to the safer loopback bind, `127.0.0.1:9087`. Docker proof
+must explicitly use `--host 0.0.0.0` because Grafana runs inside Docker and
+reaches the host listener through `host.docker.internal`; a loopback-only host
+listener cannot receive that container-delivered webhook. This is intentional,
+temporary development-proof widening, not production exposure.
+
+On Windows, the first `0.0.0.0:9087` bind can trigger a Defender Firewall
+prompt. Allow it only on the private profile, avoid public-network exposure,
+scope the inbound rule to the Docker subnet when you know it, time-box the
+proof, and stop the listener afterwards. The listener accepts only
+`POST /grafana-alerts`, stores an allowlisted privacy-reduced record under the
+gitignored `alert-receiver-output/` directory, and rejects known unsafe keys.
 
 ## Alert semantics
 
@@ -46,6 +52,12 @@ Loki alert query. When a later `COMPLETED_RECENTLY` snapshot is emitted, no new
 stuck snapshot is produced, but an earlier stuck snapshot can remain eligible
 until the two-minute lookback expires, plus the next one-minute evaluation.
 The alert means investigation is needed; it is not proof of a Codex bug.
+
+`noDataState=OK` and `execErrState=OK` are deliberately fail-open for this
+development proof. Notification silence can mean healthy, but it can also mean
+the analyzer stopped, Loki or the query failed, alert provisioning failed,
+routing failed, or the destination was unreachable. Silence does not prove
+Codex is healthy.
 
 Rule-specific notification routing groups by `alertname`, `grafana_folder`, and
 `run_hash`, waits 10 seconds for the first group, and uses a four-hour repeat

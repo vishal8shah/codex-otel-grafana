@@ -120,9 +120,9 @@ class AlertHandler(BaseHTTPRequestHandler):
             self.send_error(400, str(error))
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Receive local Grafana webhook proof safely.")
-    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=9087)
     parser.add_argument(
         "--output-jsonl",
@@ -130,7 +130,7 @@ def parse_args() -> argparse.Namespace:
         help="Gitignored path for privacy-reduced captured notifications.",
     )
     parser.add_argument("--max-body-bytes", type=int, default=1_000_000)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> int:

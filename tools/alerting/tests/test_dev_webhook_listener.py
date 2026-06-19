@@ -13,6 +13,10 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SafeNotificationTests(unittest.TestCase):
+    def test_listener_defaults_to_loopback(self) -> None:
+        args = MODULE.parse_args([])
+        self.assertEqual(args.host, "127.0.0.1")
+
     def test_extracts_only_safe_alert_fields(self) -> None:
         run_hash = "a" * 64
         record = MODULE.safe_notification(

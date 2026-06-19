@@ -33,11 +33,12 @@ metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics"
         <p>Open <strong>Grafana &gt; Codex Stuck Triage</strong>. The stat panels count unique <code>run_hash</code> values over the selected range; the table is snapshot-based and may show repeated analyzer emissions.</p>
 
         <h2 id="stuck-notification">Opt in to stuck notification</h2>
-        <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>python tools/alerting/dev_webhook_listener.py
-.\scripts\watch-stuck.ps1 -EmitDerived</pre></article><article class="article-card"><h3>macOS / Linux</h3><pre>python3 tools/alerting/dev_webhook_listener.py
+        <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>python tools/alerting/dev_webhook_listener.py --host 0.0.0.0
+.\scripts\watch-stuck.ps1 -EmitDerived</pre></article><article class="article-card"><h3>macOS / Linux</h3><pre>python3 tools/alerting/dev_webhook_listener.py --host 0.0.0.0
 ./scripts/watch-stuck.sh --emit-derived</pre></article></div>
-        <p>The watcher is opt-in, defaults to dry-run, and is not started by the stack. Grafana alerts only on recent derived <code>codex.run_health</code> records; it does not classify raw Codex telemetry. The local receiver proves development delivery without committed Slack or email secrets.</p>
-        <p class="callout">The complete chain must be healthy: LGTM/Grafana, incoming Codex telemetry, emitting watcher/analyzer, provisioned rule, contact-point routing, and reachable destination. If any link is missing, silence does not prove Codex is healthy. The alert is investigation evidence, not proof of a Codex bug.</p>
+        <p>The watcher is opt-in, defaults to dry-run, and is not started by the stack. Grafana alerts only on recent derived <code>codex.run_health</code> records; it does not classify raw Codex telemetry. The listener defaults to <code>127.0.0.1</code>. Docker proof explicitly uses <code>--host 0.0.0.0</code> because containerized Grafana reaches the host through <code>host.docker.internal</code>; loopback-only binding cannot receive that webhook. This is temporary development-proof widening, not production exposure.</p>
+        <p>On Windows, a Defender Firewall prompt may appear for <code>0.0.0.0:9087</code>. Allow only the private profile, avoid public networks, scope the rule to the Docker subnet when practical, time-box the proof, and stop the listener afterwards.</p>
+        <p class="callout">The complete chain must be healthy: LGTM/Grafana, incoming Codex telemetry, emitting watcher/analyzer, provisioned rule, contact-point routing, and reachable destination. <code>noDataState=OK</code> and <code>execErrState=OK</code> are fail-open for development proof. Silence may mean healthy, but it may also mean the analyzer stopped, Loki/query evaluation failed, provisioning or routing failed, or the destination was unreachable. Silence does not prove Codex is healthy. The alert is investigation evidence, not proof of a Codex bug.</p>
 
         <h2 id="tool-failure">Run Codex Tool Failure Diagnosis</h2>
         <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>.\scripts\tool-failure.ps1
