@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 39,
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Unique tool/run pairs analyzed",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, tool_name) (count_over_time({service_name=\"Codex Tool Diagnosis\"} | event_name=\"codex.tool_diagnostic\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "title": "Tools with failed results",
+      "type": "stat",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (tool_name) (count_over_time({service_name=\"Codex Tool Diagnosis\"} | event_name=\"codex.tool_diagnostic\" | state=\"FAILED_RESULT\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "title": "Tool failure triage",
+      "type": "table",
+      "gridPos": {"x": 0, "y": 5, "w": 24, "h": 12},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "{service_name=\"Codex Tool Diagnosis\"} | event_name=\"codex.tool_diagnostic\" | state=~\"FAILED_RESULT|SELECTED_NO_RESULT|UNKNOWN_RESULT\" | json", "queryType": "range"}],
+      "transformations": [
+        {"id": "extractFields", "options": {"source": "Line", "format": "json", "replace": true, "keepTime": true}},
+        {"id": "organize", "options": {"indexByName": {"tool_name": 0, "state": 1, "result_state": 2, "run_hash": 3, "first_seen": 4, "last_seen": 5, "decision_count": 6, "result_count": 7, "failed_results": 8, "successful_results": 9, "latest_duration_ms": 10, "last_event": 11, "notes": 12}}},
+        {"id": "sortBy", "options": {"sort": [{"field": "failed_results", "desc": true}]}}
+      ],
+      "options": {"showHeader": true},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 4,
+      "title": "Recent failed tool results",
+      "type": "logs",
+      "gridPos": {"x": 0, "y": 17, "w": 24, "h": 10},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "{service_name=\"Codex Tool Diagnosis\"} | event_name=\"codex.tool_diagnostic\" | state=\"FAILED_RESULT\" | json", "queryType": "range"}],
+      "options": {"showTime": true, "showLabels": false, "showCommonLabels": false, "wrapLogMessage": true, "prettifyLogMessage": true, "enableLogDetails": true, "sortOrder": "Descending"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "tools", "triage"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Tool Failure Diagnosis",
+  "uid": "codex-tool-failure-diagnosis"
+}

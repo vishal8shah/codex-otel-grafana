@@ -34,6 +34,7 @@ It captures the setup we verified locally:
 - Cross-platform start/stop and Grafana file-based dashboard provisioning
 - A proven Codex Stuck Triage panel and playbook backed by privacy-safe
   `run_hash` values
+- A focused Tool Failure Diagnosis panel and playbook using confirmed tool logs
 
 ## Dashboards
 
@@ -44,14 +45,15 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex / Prometheus Metrics](http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics)
 - [Codex / Token Economics](http://localhost:3000/d/codex-token-economics/codex-token-economics)
 - [Codex Stuck Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
+- [Codex Tool Failure Diagnosis](http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis)
 
 ## Capability Matrix
 
 | Pain class | Status | Public claim |
 |---|---|---|
 | Codex goes quiet / appears stuck | **Shipped** | Codex Stuck Triage uses confirmed raw telemetry and privacy-safe `run_hash`. |
-| MCP/tool startup hangs | **Next** | Tool Failure Diagnosis is the next one-pain cycle. |
-| Tool dispatch uncertainty | **Backlog** | No shipped decision-without-result diagnostic yet. |
+| MCP/tool startup hangs and failed results | **Shipped** | Tool Failure Diagnosis uses confirmed tool decision/result logs. |
+| Tool dispatch uncertainty | **Partial** | Window-bounded selected-without-result evidence ships inside Tool Failure Diagnosis; broad dispatch proof is not claimed. |
 | Review/resume flow stalls | **Acknowledged** | No claim until required signals are confirmed in `SCHEMA.md`. |
 | API/backend reliability | **Backlog** | Request evidence exists; a reliability diagnostic has not shipped. |
 | Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
@@ -96,6 +98,38 @@ never shown. Derived `codex.run_health` records are not native Codex telemetry,
 and this feature emits no native `codex_*` metrics. Dashboard stats count unique
 `run_hash` values in the selected range, while the table shows derived snapshots
 and can contain repeated analyzer emissions for the same run.
+
+## Codex Tool Failure Diagnosis
+
+This focused companion analyzer groups schema-confirmed `codex.tool_decision`
+and `codex.tool_result` logs by privacy-safe `run_hash` plus `tool_name`. It
+classifies failed results, successful results, decisions with no observed result
+in the selected window, and result activity with unknown success evidence.
+
+```text
+.\scripts\tool-failure.ps1
+.\scripts\tool-failure.ps1 -EmitDerived
+./scripts/tool-failure.sh
+./scripts/tool-failure.sh --emit-derived
+```
+
+### Tool Failure Playbook
+
+- **Symptom:** Codex selected a tool but the workflow failed, stalled, or
+  produced no useful result.
+- **Panel:** **Codex Tool Failure Diagnosis**.
+- **Meaning:** a privacy-safe derived record shows tool-related activity with a
+  failed, incomplete, or suspicious result pattern, based only on
+  schema-confirmed telemetry.
+- **Next action:** inspect `tool_name`, result state, timing/window, and
+  surrounding raw telemetry. Check MCP/server setup, tool availability,
+  permissions, and local command/runtime assumptions. Treat the diagnostic as
+  evidence for investigation, not proof of a Codex bug.
+
+Raw call IDs, arguments, output, prompts, identities, and local paths are never
+emitted. Model/provider are omitted because a safe same-record correlation is
+not confirmed for these tool logs. See
+[the analyzer guide](tools/tool-failure/README.md).
 
 ## Quick Start
 

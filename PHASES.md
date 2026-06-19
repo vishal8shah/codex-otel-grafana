@@ -11,12 +11,9 @@
 4. **Phase 2: Codex Stuck Triage — shipped**
    Added one privacy-safe, issue-led diagnostic using confirmed raw telemetry,
    derived `codex.run_health`, and unique `run_hash` stat counting.
-
-## Next One-Pain Cycle
-
-**Tool Failure Diagnosis** is next. It must use only eligible fields recorded in
-`SCHEMA.md`, preserve the privacy boundary, and prove the analyzer-to-dashboard
-path before making a shipped claim.
+5. **Phase 3: Codex Tool Failure Diagnosis — shipped on this branch**
+   Adds one focused diagnostic using confirmed tool decision/result logs,
+   privacy-safe `run_hash`, and clearly derived `codex.tool_diagnostic` records.
 
 Token burn without completion is not part of Phase 2. It was removed because
 the required source shape was not schema-backed.
