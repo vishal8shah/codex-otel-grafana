@@ -10,11 +10,14 @@ services:
     environment:
       ENABLE_LOGS_OTELCOL: "1"
       ENABLE_LOGS_GRAFANA: "1"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - codex-otel-lgtm-data:/data
       - ./observability/otelcol-config.yaml:/otel-lgtm/otelcol-config.yaml:ro
       - ./observability/provisioning/datasources/datasources.yml:/otel-lgtm/grafana/conf/provisioning/datasources/grafana-datasources.yaml:ro
       - ./observability/provisioning/dashboards/dashboards.yml:/otel-lgtm/grafana/conf/provisioning/dashboards/codex-dashboards.yaml:ro
+      - ./observability/provisioning/alerting:/otel-lgtm/grafana/conf/provisioning/alerting:ro
       - ./observability/dashboards:/otel-lgtm/codex-dashboards:ro
 
 volumes:

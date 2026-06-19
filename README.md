@@ -37,6 +37,8 @@ It captures the setup we verified locally:
 - A focused Tool Failure Diagnosis panel and playbook using confirmed tool logs
 - A focused API Request Reliability panel and playbook using confirmed API logs
 - A focused Slow Contributor Triage panel using confirmed API/tool durations
+- An opt-in stuck-candidate notification path with a watcher, provisioned alert,
+  and local development webhook receiver
 
 ## Dashboards
 
@@ -87,6 +89,34 @@ Tune the six-hour window and two-/ten-minute thresholds with
 `--window-minutes`, `--alive-threshold-seconds`, and
 `--stuck-threshold-seconds`. See [the analyzer guide](tools/run-health/README.md)
 for privacy, output and troubleshooting details.
+
+### Stuck Candidate Notification
+
+Grafana can notify on recent `STUCK_CANDIDATE` records, but it does not classify
+raw Codex telemetry itself. Keep the existing analyzer emitting fresh derived
+`codex.run_health` snapshots with the opt-in watcher:
+
+```text
+python tools/alerting/dev_webhook_listener.py
+.\scripts\watch-stuck.ps1 -EmitDerived
+./scripts/watch-stuck.sh --emit-derived
+```
+
+Dry-run is the watcher default; use Ctrl+C to stop it. It is not silently
+started with the LGTM stack. The provisioned development contact point routes
+to the local receiver only. Slack, email, and production webhooks remain
+user-configured.
+
+The alert uses a tight two-minute lookback and one alert instance per unique
+privacy-safe `run_hash`. A completed snapshot stops new stuck emissions, but an
+earlier stuck snapshot may remain eligible until that lookback expires. The
+notification means a stuck candidate needs investigation, not that Codex has a
+confirmed bug. See [the notification guide](tools/alerting/README.md).
+
+Notification requires the complete chain: LGTM/Grafana running, Codex telemetry
+arriving, watcher/analyzer emitting derived records, provisioned alert rule,
+configured contact point/routing, and a reachable destination. If any link is
+missing, silence does not prove Codex is healthy.
 
 ### Shipped Playbook
 
@@ -246,6 +276,8 @@ adding appropriate security controls.
 .\scripts\tool-failure.ps1
 .\scripts\api-reliability.ps1
 .\scripts\slow-contributor.ps1
+# Optional, in a separate terminal after starting the local webhook receiver:
+.\scripts\watch-stuck.ps1 -EmitDerived
 codex
 ```
 
@@ -262,6 +294,8 @@ Windows users who need the original direct `docker run` path.
 ./scripts/tool-failure.sh
 ./scripts/api-reliability.sh
 ./scripts/slow-contributor.sh
+# Optional, in a separate terminal after starting the local webhook receiver:
+./scripts/watch-stuck.sh --emit-derived
 codex
 ```
 
@@ -273,9 +307,9 @@ normal setup path.
 ### CI scope
 
 GitHub Actions currently provides static and unit validation. It does not stand
-up the LGTM stack or prove OTLP to Loki/Grafana dashboard runtime behavior.
-Per-diagnostic runtime proof remains a manual gate until a future integration
-workflow is added.
+up the LGTM stack or prove OTLP to Loki/Grafana dashboard or alert-delivery
+runtime behavior. Per-diagnostic runtime proof remains a manual gate until a
+future integration workflow is added.
 
 ### Docker Compose directly
 

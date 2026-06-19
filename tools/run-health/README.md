@@ -75,6 +75,13 @@ arguments after the mode flag:
 ./scripts/run-health.sh --emit-derived
 ```
 
+For opt-in periodic snapshots used by the stuck-candidate alert, use
+`scripts/watch-stuck.ps1 -EmitDerived` or
+`scripts/watch-stuck.sh --emit-derived`. The watcher delegates to this analyzer,
+defaults to a 60-second interval, and stops with Ctrl+C. It is not started by
+the stack. Grafana can evaluate only derived records that this analyzer has
+already emitted; silence at the notification destination does not prove health.
+
 The normal run uses the observed `Codex Desktop` service name. Override it with
 `--service-name` or `CODEX_SERVICE_NAME` when the local Codex resource uses a
 different safe service label.
@@ -153,5 +160,6 @@ can contain repeated derived snapshots when the analyzer runs more than once.
 - Silence alone is not proof of a stuck run; thresholds produce candidates.
 - No token-burn state is claimed: `SCHEMA.md` confirms log token fields only on
   `response.completed`, and no privacy-safe log/trace run join is established.
-- The analyzer is a manual snapshot tool, not a scheduler or broad run-health
-  suite.
+- Each analyzer invocation is a snapshot. The separate opt-in watcher only
+  schedules repeated invocations; it does not duplicate classifier logic or
+  create a broad run-health suite.

@@ -20,6 +20,9 @@
 7. **Phase 5: Codex Slow Contributor Triage — shipped**
    Identifies slow schema-confirmed API and tool contributor groups without
    claiming full end-to-end turn latency.
+8. **Phase 6: Codex Stuck Candidate Notification — shipped**
+   Adds one opt-in watcher and development-safe Grafana notification path for
+   recent privacy-safe `STUCK_CANDIDATE` derived evidence.
 
 ## Next One-Pain Cycle
 
