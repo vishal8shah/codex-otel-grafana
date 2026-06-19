@@ -20,6 +20,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex / Prometheus Metrics: http://localhost:3000/d/codex-prometheus-metrics/codex-prometheus-metrics
 - Codex / Token Economics: http://localhost:3000/d/codex-token-economics/codex-token-economics
 - Codex Stuck Triage: http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage
+- Codex Tool Failure Diagnosis: http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -100,6 +101,29 @@ never shown. The `codex.run_health` rows are derived rather than native Codex
 telemetry, and no native `codex_*` metrics are used. Stats count unique
 `run_hash` values in the selected range. The table is the primary evidence view
 and can contain repeated derived snapshots when the analyzer runs more than once.
+
+## Codex Tool Failure Diagnosis
+
+The focused tool dashboard uses only derived `codex.tool_diagnostic` logs from
+`tools/tool-failure/tool_failure.py`. It shows unique tool/run pairs, unique
+tools with failed results, a privacy-safe triage table, and recent failures.
+
+The analyzer reads confirmed `codex.tool_decision` and `codex.tool_result` logs,
+hashes the raw source identifier into `run_hash`, and retains only `tool_name`,
+confirmed result status/timing, safe counts, and source timestamps. Raw call
+IDs, arguments, output, prompts, identities, and paths are discarded.
+
+```text
+python tools/tool-failure/tool_failure.py --dry-run
+python tools/tool-failure/tool_failure.py --emit-derived
+```
+
+The dashboard is evidence for investigation. `SELECTED_NO_RESULT` is bounded by
+the selected query window and means no result was observed for that
+`run_hash + tool_name` aggregate. Raw `call_id` is deliberately excluded, so
+this is tool/run-level evidence, not proof that a specific call failed to
+dispatch or return. Repeated analyzer emissions may produce repeated snapshot
+rows, while stat panels count unique tool/run pairs or unique tool names.
 
 ## Prerequisites
 

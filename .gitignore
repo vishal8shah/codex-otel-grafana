@@ -19,6 +19,7 @@ tempo-data/
 prometheus-data/
 schema-observation-output/
 run-health-output/
+tool-failure-output/
 
 # OS/editor noise
 .DS_Store
