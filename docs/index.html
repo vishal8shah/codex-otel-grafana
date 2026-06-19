@@ -20,6 +20,7 @@
             <p class="nav-heading">Explore</p>
             <a class="nav-sub" href="#command-center">Command Center</a>
             <a class="nav-sub" href="#diagnostics">Diagnostic map</a>
+            <a class="nav-sub" href="#walkthrough">Dashboard walkthrough</a>
             <a class="nav-sub" href="#signal-path">Signal path</a>
             <a class="nav-sub" href="#privacy">Privacy boundary</a>
             <a class="nav-sub" href="#timeline">Proof timeline</a>
@@ -86,6 +87,95 @@
               <div class="map-row command-row" role="row"><span role="cell"><i class="map-marker green"></i>I do not know where to start</span><code role="cell">derived category summary</code><strong role="cell">Diagnostic Command Center</strong><span role="cell">Choose a non-green category, then open its focused view</span></div>
             </div>
             <p class="map-note"><strong>Precision boundary:</strong> run/tool and run/endpoint evidence is aggregate-level—not individual-call or individual-request proof.</p>
+          </section>
+
+          <section class="section" id="walkthrough" data-search>
+            <div class="section-head wide-head"><div><p class="eyebrow">Interactive dashboard walkthrough</p><h2>Pick the problem you are trying to understand.</h2></div><p class="section-intro">Each expandable path uses a real shipped Grafana dashboard with recent synthetic example data. Open a path to see what to inspect, what the evidence suggests, and what to do next.</p></div>
+
+            <div class="walkthrough-disclosure"><strong>Real dashboards, bounded claims.</strong><span>The screenshots below are local captures from the shipped dashboards. Their values came from focused synthetic proof triggers through OTLP, Loki, the shipped analyzers, and Grafana. They explain investigation—not automatic diagnosis or resolution.</span></div>
+
+            <div class="problem-explorer">
+              <details class="walkthrough-card" open>
+                <summary><span class="problem-number">01</span><span class="problem-title"><strong>I do not know where to start</strong><small>Derived category summary</small></span><span class="problem-destination">Diagnostic Command Center</span><span class="summary-action">Explore</span></summary>
+                <div class="walkthrough-body">
+                  <figure class="dashboard-shot">
+                    <span class="synthetic-label">Synthetic example data</span>
+                    <img src="assets/dashboard-walkthrough/command-center.png" alt="Codex Diagnostic Command Center dashboard with synthetic example data showing recent non-green issue categories" loading="lazy">
+                    <figcaption><strong>What to notice:</strong> four equal category cards and the Start here map. A non-zero card is a route into a focused investigation, not a priority score.</figcaption>
+                  </figure>
+                  <div class="walkthrough-copy">
+                    <p class="walkthrough-dashboard"><span>OPEN</span> Codex Diagnostic Command Center</p>
+                    <dl class="diagnostic-steps"><dt>Symptom</dt><dd>Codex feels wrong, but the likely issue class is unclear.</dd><dt>Inspect</dt><dd>The shared lookback, non-green category cards, and the Start here mapping to focused dashboards.</dd><dt>This evidence suggests</dt><dd>One or more derived issue categories have recent records worth investigating.</dd><dt>Next action</dt><dd>Open the linked focused dashboard, then inspect its privacy-safe grouping and source window.</dd><dt>Important limitation</dt><dd>The Command Center surfaces and routes. It does not rank competing issues, classify raw telemetry, or prove health when every card is empty.</dd></dl>
+                  </div>
+                </div>
+              </details>
+
+              <details class="walkthrough-card">
+                <summary><span class="problem-number">02</span><span class="problem-title"><strong>Codex goes quiet or appears stuck</strong><small><code>codex.run_health</code></small></span><span class="problem-destination">Codex Stuck Triage</span><span class="summary-action">Explore</span></summary>
+                <div class="walkthrough-body">
+                  <figure class="dashboard-shot">
+                    <span class="synthetic-label">Synthetic example data</span>
+                    <img src="assets/dashboard-walkthrough/stuck-triage.png" alt="Codex Stuck Triage dashboard with synthetic example data showing one privacy-safe stuck candidate" loading="lazy">
+                    <figcaption><strong>What to notice:</strong> unique-run stats avoid snapshot inflation, while the table preserves the state, quiet period, last safe event type, and bounded source window.</figcaption>
+                  </figure>
+                  <div class="walkthrough-copy">
+                    <p class="walkthrough-dashboard"><span>OPEN</span> Codex Stuck Triage</p>
+                    <dl class="diagnostic-steps"><dt>Symptom</dt><dd>Codex appears quiet, incomplete, or no longer making visible progress.</dd><dt>Inspect</dt><dd><code>run_hash</code>, state, <code>quiet_for_seconds</code>, last event, and source window.</dd><dt>This evidence suggests</dt><dd>The run may be a stuck candidate, slow but alive, or incomplete with insufficient evidence.</dd><dt>Next action</dt><dd>Compare state and quiet period, then investigate surrounding tool, API, and environment evidence for the same time window.</dd><dt>Important limitation</dt><dd>A stuck candidate is heuristic investigation evidence, not proof of a Codex bug. Repeated snapshot rows do not represent additional runs.</dd></dl>
+                  </div>
+                </div>
+              </details>
+
+              <details class="walkthrough-card">
+                <summary><span class="problem-number">03</span><span class="problem-title"><strong>A selected tool failed or produced no result</strong><small><code>codex.tool_diagnostic</code></small></span><span class="problem-destination">Tool Failure Diagnosis</span><span class="summary-action">Explore</span></summary>
+                <div class="walkthrough-body">
+                  <figure class="dashboard-shot">
+                    <span class="synthetic-label">Synthetic example data</span>
+                    <img src="assets/dashboard-walkthrough/tool-failure.png" alt="Codex Tool Failure Diagnosis dashboard with synthetic example data showing one failed tool and run aggregate" loading="lazy">
+                    <figcaption><strong>What to notice:</strong> the failure is grouped by privacy-safe run hash and schema-backed tool name. Decision and result counts describe the aggregate, not one call.</figcaption>
+                  </figure>
+                  <div class="walkthrough-copy">
+                    <p class="walkthrough-dashboard"><span>OPEN</span> Codex Tool Failure Diagnosis</p>
+                    <dl class="diagnostic-steps"><dt>Symptom</dt><dd>A tool was selected, failed, stalled, or produced no useful result.</dd><dt>Inspect</dt><dd><code>tool_name</code>, derived state, result state, decision/result counts, run hash, and source window.</dd><dt>This evidence suggests</dt><dd>A run/tool aggregate contains failed, missing, successful, or incomplete result evidence.</dd><dt>Next action</dt><dd>Check MCP/server setup, tool availability, permissions, and local command or runtime assumptions; then inspect surrounding raw telemetry safely.</dd><dt>Important limitation</dt><dd>Raw call IDs are deliberately excluded. This is tool/run-level evidence, not proof about one specific call.</dd></dl>
+                  </div>
+                </div>
+              </details>
+
+              <details class="walkthrough-card">
+                <summary><span class="problem-number">04</span><span class="problem-title"><strong>An API request failed, retried, or ran slow</strong><small><code>codex.api_diagnostic</code></small></span><span class="problem-destination">API Request Reliability</span><span class="summary-action">Explore</span></summary>
+                <div class="walkthrough-body">
+                  <figure class="dashboard-shot">
+                    <span class="synthetic-label">Synthetic example data</span>
+                    <img src="assets/dashboard-walkthrough/api-reliability.png" alt="Codex API Request Reliability dashboard with synthetic example data showing failed retried and slow request-group evidence" loading="lazy">
+                    <figcaption><strong>What to notice:</strong> status bucket, bounded duration, attempt evidence, and endpoint hash keep the view useful without displaying the raw endpoint.</figcaption>
+                  </figure>
+                  <div class="walkthrough-copy">
+                    <p class="walkthrough-dashboard"><span>OPEN</span> Codex API Request Reliability</p>
+                    <dl class="diagnostic-steps"><dt>Symptom</dt><dd>Codex feels unreliable or fails around model/backend activity.</dd><dt>Inspect</dt><dd>State, status bucket, maximum duration, maximum attempt, retry flag, endpoint hash, run hash, and source window.</dd><dt>This evidence suggests</dt><dd>A run/endpoint group contains failed, retried, slow, successful, or incomplete request evidence.</dd><dt>Next action</dt><dd>Check local connectivity and configuration, compare status/timing with the selected window, and inspect surrounding telemetry before escalating.</dd><dt>Important limitation</dt><dd>Failure wins conservative group precedence, so a failed group may also contain successful evidence. It does not prove an individual request or Codex service bug.</dd></dl>
+                  </div>
+                </div>
+              </details>
+
+              <details class="walkthrough-card">
+                <summary><span class="problem-number">05</span><span class="problem-title"><strong>Codex feels slow</strong><small><code>codex.slow_contributor</code></small></span><span class="problem-destination">Slow Contributor Triage</span><span class="summary-action">Explore</span></summary>
+                <div class="walkthrough-body">
+                  <figure class="dashboard-shot">
+                    <span class="synthetic-label">Synthetic example data</span>
+                    <img src="assets/dashboard-walkthrough/slow-contributor.png" alt="Codex Slow Contributor Triage dashboard with synthetic example data showing slow API and tool contributor groups" loading="lazy">
+                    <figcaption><strong>What to notice:</strong> contributor type, observed duration, local threshold, and safe endpoint/tool grouping identify where confirmed time evidence accumulated.</figcaption>
+                  </figure>
+                  <div class="walkthrough-copy">
+                    <p class="walkthrough-dashboard"><span>OPEN</span> Codex Slow Contributor Triage</p>
+                    <dl class="diagnostic-steps"><dt>Symptom</dt><dd>Codex feels slow between a request and a useful response.</dd><dt>Inspect</dt><dd>Contributor type, duration, configured threshold, run hash, endpoint hash or tool name, and source window.</dd><dt>This evidence suggests</dt><dd>A confirmed API request or tool result exceeded a local investigation threshold, or both contributor types were slow in one run.</dd><dt>Next action</dt><dd>Use contributor type to choose API or tool investigation, then compare duration with the local threshold and focused dashboard evidence.</dd><dt>Important limitation</dt><dd>This is contributor-level evidence. It does not measure full end-to-end Codex turn latency or prove a service bug.</dd></dl>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div class="troubleshooting-flow" aria-label="End-to-end troubleshooting workflow">
+              <div class="flow-step"><span>1</span><strong>Notice the symptom</strong><small>Quiet, failed tool, unreliable API, slowness, or uncertainty.</small></div><div class="flow-step"><span>2</span><strong>Open a starting view</strong><small>Command Center or the known focused dashboard.</small></div><div class="flow-step"><span>3</span><strong>Inspect safe evidence</strong><small>State, grouping, bounded timing, and source window.</small></div><div class="flow-step"><span>4</span><strong>Narrow the issue class</strong><small>Run, tool, API, or slow contributor evidence.</small></div><div class="flow-step"><span>5</span><strong>Take the next action</strong><small>Check environment, availability, permissions, connectivity, or timing context.</small></div><div class="flow-step"><span>6</span><strong>Keep the boundary</strong><small>Evidence guides investigation; it does not automatically resolve or prove a bug.</small></div>
+            </div>
+
+            <aside class="reproduce-note"><div><p class="mono-label">SEE IT LOCALLY</p><h3>Reproduce the same path with the repository proof triggers.</h3></div><p>Start the local stack, emit one focused synthetic source scenario through OTLP, run the matching analyzer with derived emission enabled, and open the dashboard in a tight recent window. The <a href="rebuild-guide.html">quickstart</a> explains the local commands; this walkthrough is not an installation flow.</p></aside>
           </section>
 
           <section class="section" id="signal-path" data-search>
