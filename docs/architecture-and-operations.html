@@ -1,34 +1,101 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architecture | Codex Diagnostic Kit</title><link rel="stylesheet" href="assets/site.css"></head>
-  <body><div class="app-shell">
-    <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-mark">&#9670;</span><span>Codex Diagnostic Kit</span></a><nav><div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">&#8962;</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">&#8599;</span>Quickstart</a></div><div class="nav-section"><p class="nav-heading">Architecture</p><a class="nav-sub active" href="architecture-and-operations.html">Signal flow</a><a class="nav-sub" href="#derived">Derived evidence</a><a class="nav-sub" href="#privacy">Privacy</a><a class="nav-sub" href="#operations">Operations</a></div></nav><div class="help-card"><strong>Design rule</strong><p>Confirmed raw telemetry in; explicitly derived, privacy-safe evidence out.</p></div></aside>
-    <main class="main"><header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search docs..." aria-label="Search docs"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
-      <div class="content article" data-search>
-        <p class="eyebrow">Local evidence path</p><h1>Architecture and operations</h1>
-        <p class="lead">Codex emits OTLP signals to a local Collector. The Collector applies redaction and routing before Loki, Tempo, metrics storage, and Grafana. Diagnostics are added only when the relevant fields are confirmed.</p>
-        <div class="panel diagram"><div class="diagram-grid"><div class="diagram-col"><h3>Codex</h3><div class="diagram-node"><strong>CLI / Desktop</strong><span>Raw OTLP signals</span></div></div><div class="diagram-node"><strong>Collector</strong><span>Redact, batch, route</span></div><div class="diagram-node"><strong>LGTM</strong><span>Loki, Tempo, metrics storage</span></div><div class="diagram-node"><strong>Analyzer</strong><span>Hash and classify confirmed fields</span></div><div class="diagram-node"><strong>Grafana</strong><span>Provisioned evidence views</span></div><div class="diagram-col"><h3>Builder</h3><div class="diagram-node"><strong>Playbook</strong><span>Candidate, context, next action</span></div></div></div></div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Architecture | Codex Diagnostic Kit</title>
+    <meta name="description" content="The raw-to-derived evidence loop, privacy boundary, and local operating model behind the Codex Diagnostic Kit.">
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Documentation navigation">
+        <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">&#9670;</span><span>Codex Diagnostic Kit</span></a>
+        <nav>
+          <div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon" aria-hidden="true">01</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon" aria-hidden="true">02</span>Quickstart</a></div>
+          <div class="nav-section"><p class="nav-heading">Architecture</p><a class="nav-sub active" href="architecture-and-operations.html">Evidence loop</a><a class="nav-sub" href="#raw">Raw side</a><a class="nav-sub" href="#reduction">Privacy reduction</a><a class="nav-sub" href="#derived">Derived side</a><a class="nav-sub" href="#notification">Optional notification</a><a class="nav-sub" href="#operations">Operations</a></div>
+          <div class="nav-section"><p class="nav-heading">Elsewhere</p><a class="nav-sub" href="index.html#diagnostics">Diagnostic map</a><a class="nav-sub" href="index.html#privacy">Privacy boundary</a><a class="nav-sub" href="builder-metrics.html">Capability ledger</a></div>
+        </nav>
+        <div class="help-card"><span class="signal-dot" aria-hidden="true"></span><strong>The important loop</strong><p>Loki raw evidence &#8594; analyzer &#8594; Loki derived evidence &#8594; Grafana.</p></div>
+      </aside>
 
-        <h2 id="signals">Signal roles</h2>
-        <div class="grid-3"><article class="article-card"><h3>Logs</h3><p>Confirmed event records provide completion, activity, model, tool, and timing evidence where recorded.</p></article><article class="article-card"><h3>Traces</h3><p>Observed spans provide execution context. A trace attribute is not joined to a run unless that correlation is proven safe.</p></article><article class="article-card"><h3>Metrics</h3><p>Collector health and derived spanmetrics verify pipeline behavior. They are not native <code>codex_*</code> metrics.</p></article></div>
+      <main class="main">
+        <header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" type="search" placeholder="Search this page..." aria-label="Search this page"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><a class="button" href="index.html">Overview</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
 
-        <h2 id="derived">Codex Stuck Triage derivation</h2>
-        <p>Raw records are grouped using a hash of the source conversation identifier. The raw identifier is discarded; derived <code>codex.run_health</code> rows expose only <code>run_hash</code>, state, safe timing, model, last event, and explanatory fields.</p>
-        <pre>schema-confirmed Codex logs
-  -> hash source identifier
-  -> classify completion and quiet-time evidence
-  -> emit derived codex.run_health
-  -> query unique run_hash values in Grafana</pre>
-        <p class="callout">A stuck state is a heuristic candidate. It does not prove a Codex product bug and does not claim to fix one.</p>
+        <div class="content article architecture-article">
+          <section class="article-hero" data-search>
+            <p class="eyebrow"><span class="signal-dot" aria-hidden="true"></span>Local evidence path</p>
+            <h1>A loop, not a one-way pipeline.</h1>
+            <p class="lead">Codex telemetry enters the local LGTM stack as raw evidence. Focused analyzers read confirmed log fields from Loki, reduce them to privacy-safe records, write those records back to Loki, and let Grafana query the derived side.</p>
+            <div class="trust-row"><span class="status-badge proof">Shipped path</span><span class="status-badge proof">Schema-confirmed inputs</span><span class="status-badge proof">Allowlisted outputs</span></div>
+          </section>
 
-        <h2 id="privacy">Privacy boundary</h2>
-        <p>Prompt logging is disabled. The collector drops known identity and prompt-like attributes, and the analyzer uses an allowlist before emitting derived records.</p>
-        <div class="grid-2"><article class="article-card"><h3>Never expose</h3><p>Raw prompts, identities, conversation identifiers, local paths, raw endpoints, raw call IDs, tool arguments, and tool output.</p></article><article class="article-card"><h3>Safe diagnostic fields</h3><p>Privacy-safe run hash, derived state, quiet time, last event, model where schema-backed, tool name where schema-backed, endpoint hash, status bucket, bounded duration and attempt evidence, retry/slow flags, and bounded source window.</p></article></div>
+          <section class="section" id="loop" data-search>
+            <div class="section-head wide-head"><div><p class="eyebrow">Architecture overview</p><h2>The full signal and investigation loop.</h2></div><p class="section-intro">Raw logs and traces remain evidence sources. Derived records are a separate, clearly labelled diagnostic layer.</p></div>
+            <div class="architecture-loop" aria-label="Detailed architecture loop">
+              <div class="arch-zone raw-zone" id="raw">
+                <div class="arch-zone-head"><div><span class="zone-kicker">RAW TELEMETRY SIDE</span><h3>Schema-confirmed source evidence</h3></div><span class="status-badge shipped">Shipped</span></div>
+                <div class="arch-path">
+                  <div class="arch-node"><span class="node-index">01</span><strong>Interactive Codex</strong><small>Emits OTLP logs, traces, and metrics-export traffic</small></div>
+                  <span class="arch-connector" aria-hidden="true">&#8594;</span>
+                  <div class="arch-node"><span class="node-index">02</span><strong>OTel Collector</strong><small>Receives, redacts, batches, and routes local signals</small></div>
+                  <span class="arch-connector" aria-hidden="true">&#8594;</span>
+                  <div class="arch-node store-node"><span class="node-index">03</span><strong>LGTM stores</strong><small>Loki logs &middot; Tempo traces &middot; collector-derived metrics</small></div>
+                </div>
+                <p class="zone-note">Diagnostics use only fields confirmed in the repository schema ledger. Trace evidence is not joined to a run unless safe correlation is proven.</p>
+              </div>
 
-        <h2 id="operations">Operations</h2>
-        <table><thead><tr><th>Check</th><th>Command</th><th>Expected result</th></tr></thead><tbody><tr><td>Compose stack</td><td><code>docker compose ps</code></td><td>LGTM service healthy</td></tr><tr><td>Setup health</td><td><code>scripts/doctor.ps1</code> or <code>scripts/doctor.sh</code></td><td>Required local endpoints reachable</td></tr><tr><td>Grafana</td><td><code>http://localhost:3000/api/health</code></td><td>Database healthy</td></tr><tr><td>Command Center</td><td><code>http://localhost:3000/d/codex-diagnostic-command-center/codex-diagnostic-command-center</code></td><td>Derived-evidence front door links to focused dashboards</td></tr><tr><td>Stuck analyzer</td><td><code>scripts/run-health.ps1</code> or <code>scripts/run-health.sh</code></td><td>Privacy-safe summary</td></tr><tr><td>Stuck watcher</td><td><code>scripts/watch-stuck.ps1 -EmitDerived</code> or <code>scripts/watch-stuck.sh --emit-derived</code></td><td>Opt-in fresh derived records for alert evaluation</td></tr><tr><td>Local alert receiver</td><td><code>python tools/alerting/dev_webhook_listener.py --host 0.0.0.0</code></td><td>Temporary Docker-reachable development webhook capture</td></tr><tr><td>API analyzer</td><td><code>scripts/api-reliability.ps1</code> or <code>scripts/api-reliability.sh</code></td><td>Privacy-safe run/endpoint summary</td></tr><tr><td>Slow contributors</td><td><code>scripts/slow-contributor.ps1</code> or <code>scripts/slow-contributor.sh</code></td><td>Bounded API/tool contributor summary, not full-turn latency</td></tr></tbody></table>
-        <p class="callout">Stuck notification depends on the entire local chain: running stack, incoming telemetry, emitting watcher, provisioned alert, configured routing, and reachable destination. Grafana evaluates derived run-health evidence only. The fail-open <code>noDataState=OK</code> and <code>execErrState=OK</code> settings avoid development-proof noise, but silence can also indicate a broken analyzer, query, provisioning, route, or destination. It does not prove Codex is healthy.</p>
-      </div>
-    </main>
-  </div><script src="assets/site.js"></script></body>
+              <div class="arch-reduction" id="reduction">
+                <div class="reduction-rail" aria-hidden="true"><span>Loki read</span><i></i><span>Loki write</span></div>
+                <div class="reduction-core"><p class="zone-kicker">PRIVACY REDUCTION GATE</p><h3>Focused analyzers</h3><p>Read raw Loki records, hash safe grouping identifiers, drop unsafe fields, apply documented precedence, and emit bounded derived snapshots.</p><div class="reduction-tags"><code>run-health</code><code>tool-failure</code><code>api-reliability</code><code>slow-contributor</code></div></div>
+                <div class="reduction-boundary"><strong>No unsafe fields should cross.</strong><span>Prompts, identities, raw conversation IDs, paths, endpoints, call IDs, tool arguments, and tool output are excluded.</span></div>
+              </div>
+
+              <div class="arch-zone derived-zone" id="derived">
+                <div class="arch-zone-head"><div><span class="zone-kicker">DERIVED PRIVACY-SAFE SIDE</span><h3>Evidence for investigation</h3></div><span class="status-badge shipped">Shipped</span></div>
+                <div class="arch-path">
+                  <div class="arch-node store-node"><span class="node-index">04</span><strong>Loki derived records</strong><small><code>codex.run_health</code> &middot; <code>codex.tool_diagnostic</code> &middot; <code>codex.api_diagnostic</code> &middot; <code>codex.slow_contributor</code></small></div>
+                  <span class="arch-connector" aria-hidden="true">&#8594;</span>
+                  <div class="arch-node"><span class="node-index">05</span><strong>Grafana views</strong><small>Command Center plus stuck, tool, API, and slow-contributor dashboards</small></div>
+                  <span class="arch-connector optional" aria-hidden="true">&#8640;</span>
+                  <div class="arch-node optional-node"><span class="node-index">OPTIONAL</span><strong>Local notification</strong><small>Grafana alerting routes recent stuck-candidate evidence to a development webhook</small></div>
+                </div>
+                <p class="zone-note">Derived snapshots are investigation evidence. Repeated emissions are deduplicated in stat queries by the diagnostic’s privacy-safe grouping key.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="signals" data-search>
+            <div class="section-head"><div><p class="eyebrow">Signal roles</p><h2>Each store has a bounded job.</h2></div></div>
+            <div class="grid-3"><article class="article-card signal-card"><span class="step-kicker">LOKI</span><h3>Logs and derived records</h3><p>Schema-confirmed raw event records are analyzer inputs. Clearly named derived records are dashboard inputs.</p></article><article class="article-card signal-card"><span class="step-kicker">TEMPO</span><h3>Trace context</h3><p>Observed spans provide execution context. The shipped analyzers do not invent a join where safe same-run correlation is absent.</p></article><article class="article-card signal-card"><span class="step-kicker">METRICS</span><h3>Pipeline evidence</h3><p>Collector health and spanmetrics help verify the pipeline. They are not native <code>codex_*</code> Prometheus metrics.</p></article></div>
+          </section>
+
+          <section class="section" id="grouping" data-search>
+            <div class="section-head wide-head"><div><p class="eyebrow">Grouping semantics</p><h2>Useful aggregation without unsafe identifiers.</h2></div><p class="section-intro">The absence of a confirmed safe request or call ID keeps several views deliberately aggregate-level.</p></div>
+            <div class="grouping-grid"><article><code>run_hash</code><strong>Run health</strong><span>Unique privacy-safe run grouping.</span></article><article><code>run_hash + tool_name</code><strong>Tool diagnosis</strong><span>Tool/run evidence, not individual-call proof.</span></article><article><code>run_hash + endpoint_hash</code><strong>API diagnosis</strong><span>Run/endpoint evidence, not individual-request proof.</span></article><article><code>confirmed contributor grouping</code><strong>Slow contributor</strong><span>Contributor evidence, not full-turn latency.</span></article></div>
+          </section>
+
+          <section class="section" id="notification" data-search>
+            <div class="section-head wide-head"><div><p class="eyebrow">Optional Phase 6 path</p><h2>Push evidence locally—without calling it production alerting.</h2></div><span class="status-badge partial">Opt-in</span></div>
+            <div class="notification-chain"><span>Fresh <code>codex.run_health</code></span><i aria-hidden="true">&#8594;</i><span>Grafana rule</span><i aria-hidden="true">&#8594;</i><span>Notification policy</span><i aria-hidden="true">&#8594;</i><span>Local webhook</span></div>
+            <p class="callout">Every link must work: running stack, incoming telemetry, emitting watcher/analyzer, provisioned rule, configured routing, and reachable destination. The development proof is fail-open for no-data and execution errors. Silence does not prove health.</p>
+          </section>
+
+          <section class="section" id="privacy" data-search>
+            <div class="section-head"><div><p class="eyebrow">Privacy rules</p><h2>Reduction happens before the diagnostic layer.</h2></div></div>
+            <div class="privacy-boundary compact-boundary"><article class="privacy-card blocked"><div class="privacy-card-head"><span class="privacy-symbol" aria-hidden="true">&#215;</span><div><p class="mono-label">EXCLUDED</p><h3>Unsafe source values</h3></div></div><ul><li>Prompts and identities</li><li>Raw conversation IDs and call IDs</li><li>Raw endpoints and local paths</li><li>Tool arguments and tool output</li></ul></article><div class="privacy-transform"><span>HASH</span><span>DROP</span><small>allowlist output</small></div><article class="privacy-card allowed"><div class="privacy-card-head"><span class="privacy-symbol" aria-hidden="true">&#10003;</span><div><p class="mono-label">DERIVED</p><h3>Safe diagnostic fields</h3></div></div><ul><li>Run and endpoint hashes</li><li>Tool name where schema-backed</li><li>Derived state and status bucket</li><li>Bounded timing, attempts, and source window</li></ul></article></div>
+          </section>
+
+          <section class="section" id="operations" data-search>
+            <div class="section-head"><div><p class="eyebrow">Operations</p><h2>Trust the chain one link at a time.</h2></div></div>
+            <div class="operations-table"><table><thead><tr><th>Check</th><th>Command or target</th><th>What it establishes</th></tr></thead><tbody><tr><td>Compose stack</td><td><code>docker compose ps</code></td><td>The local LGTM service is running.</td></tr><tr><td>Setup health</td><td><code>scripts/doctor.ps1</code> or <code>scripts/doctor.sh</code></td><td>Required local endpoints are reachable.</td></tr><tr><td>Grafana health</td><td><code>http://localhost:3000/api/health</code></td><td>Grafana and its database are healthy.</td></tr><tr><td>Raw logs</td><td>Loki query for the configured Codex service</td><td>Codex telemetry is arriving.</td></tr><tr><td>Derived records</td><td>Loki query for a shipped derived event</td><td>An analyzer has emitted privacy-safe evidence.</td></tr><tr><td>Dashboard</td><td>Command Center or focused view</td><td>Grafana can query and render the derived stream.</td></tr></tbody></table></div>
+            <p class="callout">CI validates static structure and unit behavior. It does not stand up the LGTM stack or prove OTLP &#8594; Loki &#8594; analyzer &#8594; Grafana runtime behavior; that remains a manual gate.</p>
+          </section>
+
+          <footer class="footer"><span>Architecture claims follow the repository’s schema ledger and shipped analyzer behavior.</span><a href="rebuild-guide.html">Run the local kit &#8594;</a></footer>
+        </div>
+      </main>
+    </div>
+    <script src="assets/site.js"></script>
+  </body>
 </html>
