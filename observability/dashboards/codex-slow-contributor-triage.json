@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 39,
+  "templating": {"list": []},
+  "annotations": {"list": []},
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Unique slow contributor groups",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, contributor_type, endpoint_hash, tool_name) (count_over_time({service_name=\"Codex Slow Contributor Diagnosis\"} | event_name=\"codex.slow_contributor\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "title": "Slow API contributor groups",
+      "type": "stat",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, endpoint_hash) (count_over_time({service_name=\"Codex Slow Contributor Diagnosis\"} | event_name=\"codex.slow_contributor\" | contributor_type=\"api_request\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "title": "Slow tool contributor groups",
+      "type": "stat",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, tool_name) (count_over_time({service_name=\"Codex Slow Contributor Diagnosis\"} | event_name=\"codex.slow_contributor\" | contributor_type=\"tool_result\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 4,
+      "title": "Slow contributor triage",
+      "type": "table",
+      "gridPos": {"x": 0, "y": 5, "w": 24, "h": 15},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "{service_name=\"Codex Slow Contributor Diagnosis\"} | event_name=\"codex.slow_contributor\" | json", "queryType": "range"}],
+      "transformations": [
+        {"id": "extractFields", "options": {"source": "Line", "format": "json", "replace": true, "keepTime": true}},
+        {"id": "organize", "options": {"indexByName": {"contributor_type": 0, "state": 1, "duration_ms": 2, "threshold_ms": 3, "run_hash": 4, "endpoint_hash": 5, "tool_name": 6, "first_seen": 7, "last_seen": 8, "event_count": 9, "grouping_precision": 10, "notes": 11}}},
+        {"id": "sortBy", "options": {"sort": [{"field": "duration_ms", "desc": true}]}}
+      ],
+      "options": {"showHeader": true},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "slow", "contributors", "triage"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Slow Contributor Triage",
+  "uid": "codex-slow-contributor-triage"
+}

@@ -17,12 +17,15 @@
 6. **Phase 4: Codex API Request Reliability — shipped**
    Adds one focused diagnostic using confirmed `codex.api_request` logs,
    privacy-safe run/endpoint hashes, and derived `codex.api_diagnostic` records.
+7. **Phase 5: Codex Slow Contributor Triage — shipped**
+   Identifies slow schema-confirmed API and tool contributor groups without
+   claiming full end-to-end turn latency.
 
 ## Next One-Pain Cycle
 
-**Slow-turn Contributor Triage** is next in the backlog. It remains unbuilt
-until its source fields, privacy boundary, and end-to-end evidence path are
-confirmed.
+**Review/resume flow diagnosis** is next in the existing backlog. It remains
+unbuilt until its source fields, privacy boundary, and end-to-end evidence path
+are confirmed.
 
 Token burn without completion is not part of Phase 2. It was removed because
 the required source shape was not schema-backed.
