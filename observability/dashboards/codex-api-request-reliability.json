@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 39,
+  "templating": {"list": []},
+  "annotations": {"list": []},
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Unique API request groups analyzed",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, endpoint_hash) (count_over_time({service_name=\"Codex API Diagnosis\"} | event_name=\"codex.api_diagnostic\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "title": "Failed or retried request groups",
+      "type": "stat",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, endpoint_hash) (count_over_time({service_name=\"Codex API Diagnosis\"} | event_name=\"codex.api_diagnostic\" | state=~\"FAILED_REQUEST|RETRIED_REQUEST\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "title": "Slow request groups",
+      "type": "stat",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, endpoint_hash) (count_over_time({service_name=\"Codex API Diagnosis\"} | event_name=\"codex.api_diagnostic\" | slow_observed=\"true\" [$__range])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    },
+    {
+      "id": 4,
+      "title": "API request triage",
+      "type": "table",
+      "gridPos": {"x": 0, "y": 5, "w": 24, "h": 15},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "{service_name=\"Codex API Diagnosis\"} | event_name=\"codex.api_diagnostic\" | state=~\"FAILED_REQUEST|RETRIED_REQUEST|SLOW_REQUEST|UNKNOWN_REQUEST\" | json", "queryType": "range"}],
+      "transformations": [
+        {"id": "extractFields", "options": {"source": "Line", "format": "json", "replace": true, "keepTime": true}},
+        {"id": "organize", "options": {"indexByName": {"state": 0, "status_bucket": 1, "run_hash": 2, "endpoint_hash": 3, "first_seen": 4, "last_seen": 5, "max_duration_ms": 6, "max_attempt": 7, "retry_observed": 8, "slow_observed": 9, "event_count": 10, "failed_evidence_count": 11, "successful_evidence_count": 12, "unknown_outcome_count": 13, "slow_threshold_ms": 14, "notes": 15}}},
+        {"id": "sortBy", "options": {"sort": [{"field": "failed_evidence_count", "desc": true}]}}
+      ],
+      "options": {"showHeader": true},
+      "fieldConfig": {"defaults": {}, "overrides": []}
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "api", "reliability", "triage"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex API Request Reliability",
+  "uid": "codex-api-request-reliability"
+}

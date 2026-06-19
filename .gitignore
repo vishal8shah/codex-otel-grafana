@@ -20,6 +20,7 @@ prometheus-data/
 schema-observation-output/
 run-health-output/
 tool-failure-output/
+api-reliability-output/
 
 # OS/editor noise
 .DS_Store

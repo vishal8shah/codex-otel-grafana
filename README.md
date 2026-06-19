@@ -35,6 +35,7 @@ It captures the setup we verified locally:
 - A proven Codex Stuck Triage panel and playbook backed by privacy-safe
   `run_hash` values
 - A focused Tool Failure Diagnosis panel and playbook using confirmed tool logs
+- A focused API Request Reliability panel and playbook using confirmed API logs
 
 ## Dashboards
 
@@ -46,6 +47,7 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex / Token Economics](http://localhost:3000/d/codex-token-economics/codex-token-economics)
 - [Codex Stuck Triage](http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage)
 - [Codex Tool Failure Diagnosis](http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis)
+- [Codex API Request Reliability](http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability)
 
 ## Capability Matrix
 
@@ -55,7 +57,7 @@ After setup, open Grafana with `admin` / `admin`:
 | MCP/tool startup hangs and failed results | **Shipped** | Tool Failure Diagnosis uses confirmed tool decision/result logs. |
 | Tool dispatch uncertainty | **Partial** | Window-bounded selected-without-result evidence ships inside Tool Failure Diagnosis; broad dispatch proof is not claimed. |
 | Review/resume flow stalls | **Acknowledged** | No claim until required signals are confirmed in `SCHEMA.md`. |
-| API/backend reliability | **Backlog** | Request evidence exists; a reliability diagnostic has not shipped. |
+| API/backend reliability | **Shipped** | API Request Reliability groups confirmed request evidence by privacy-safe run and endpoint hashes. |
 | Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
 
 Token burn without completion was removed from Phase 2 because the required raw
@@ -142,6 +144,52 @@ Repeated analyzer emissions can create repeated snapshot rows in the table and
 log panels. The stat panels deduplicate by unique `run_hash + tool_name` pairs
 or unique tool names over the selected range.
 
+## Codex API Request Reliability
+
+This focused analyzer groups schema-confirmed `codex.api_request` logs by
+privacy-safe `run_hash + endpoint_hash`. Raw endpoints are never exported, and
+retained real endpoint values were unavailable for a defensible cardinality and
+privacy review. The hash is conservative and privacy-safe, but less readable
+than a future low-cardinality `endpoint_kind`. Add `endpoint_kind` only after
+real endpoint values have been reviewed; raw endpoint values must not be
+exposed by default.
+
+There is no confirmed safe per-request identifier. The diagnostic therefore
+provides run/endpoint-level evidence, not proof that one individual request
+failed. A `FAILED_REQUEST` group may also contain successful request evidence
+from the selected window; failure wins because precedence is intentionally
+conservative. `RETRIED_REQUEST` and `SLOW_REQUEST` are group-level
+investigation evidence, not proof of a Codex service bug.
+
+```text
+.\scripts\api-reliability.ps1
+.\scripts\api-reliability.ps1 -EmitDerived
+./scripts/api-reliability.sh
+./scripts/api-reliability.sh --emit-derived
+```
+
+`FAILED_REQUEST`, `RETRIED_REQUEST`, `SLOW_REQUEST`, `SUCCESSFUL_REQUEST`, and
+`UNKNOWN_REQUEST` use that precedence. Retry is a group-level flag from
+`attempt > 1`; attempts are not summed as failures. The default 10,000 ms slow
+threshold is configurable and is a local investigation threshold, not an SLO
+or end-to-end latency claim.
+
+### API Request Reliability Playbook
+
+- **Symptom:** Codex feels slow, unreliable, or fails around model/backend activity.
+- **Panel:** **Codex API Request Reliability**.
+- **Meaning:** a privacy-safe derived record shows failed, slow, retried, or
+  incomplete API request evidence from schema-confirmed telemetry.
+- **Next action:** inspect state, duration, status bucket, retry/attempt
+  evidence, endpoint hash, run hash, and source window. Treat it as evidence
+  for investigation, not proof of a Codex service bug.
+
+Derived `codex.api_diagnostic` records are not native Codex telemetry. Repeated
+analyzer emissions may create repeated table snapshots; stat panels count
+unique `run_hash + endpoint_hash` groups over the selected range. See
+[the analyzer guide](tools/api-reliability/README.md) for the full privacy and
+state model.
+
 ## Quick Start
 
 Copy `.env.example` to `.env` only if you need to change the safe local
@@ -156,6 +204,7 @@ adding appropriate security controls.
 .\scripts\doctor.ps1
 .\scripts\schema-verify.ps1
 .\scripts\run-health.ps1
+.\scripts\api-reliability.ps1
 codex
 ```
 
@@ -169,6 +218,7 @@ Windows users who need the original direct `docker run` path.
 ./scripts/doctor.sh
 ./scripts/schema-verify.sh
 ./scripts/run-health.sh
+./scripts/api-reliability.sh
 codex
 ```
 
