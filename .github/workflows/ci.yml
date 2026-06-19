@@ -25,6 +25,7 @@ jobs:
           python -m unittest discover -s tools/tool-failure/tests
           python -m unittest discover -s tools/api-reliability/tests
           python -m unittest discover -s tools/slow-contributor/tests
+          python -m unittest discover -s tools/alerting/tests
 
       - name: Compile Python files
         run: python -m compileall -q tools scripts
@@ -42,6 +43,23 @@ jobs:
               with path.open(encoding="utf-8") as handle:
                   json.load(handle)
           print(f"Validated {len(files)} dashboard JSON files")
+          PY
+
+      - name: Validate alert provisioning
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = sorted(Path("observability/provisioning/alerting").glob("*.yaml"))
+          if not files:
+              raise SystemExit("No alert provisioning files found")
+          for path in files:
+              with path.open(encoding="utf-8") as handle:
+                  payload = json.load(handle)
+              if payload.get("apiVersion") != 1 or not payload.get("groups"):
+                  raise SystemExit(f"Invalid Grafana alert provisioning structure: {path}")
+          print(f"Validated {len(files)} alert provisioning files")
           PY
 
       - name: Validate Docker Compose config

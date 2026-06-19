@@ -1,0 +1,114 @@
+{
+  "apiVersion": 1,
+  "contactPoints": [
+    {
+      "orgId": 1,
+      "name": "Codex local dev webhook",
+      "receivers": [
+        {
+          "uid": "codex_stuck_dev_webhook",
+          "type": "webhook",
+          "settings": {
+            "url": "http://host.docker.internal:9087/grafana-alerts",
+            "httpMethod": "POST",
+            "maxAlerts": 10
+          },
+          "disableResolveMessage": false
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "Codex stuck candidate notification",
+      "folder": "Codex Observability",
+      "interval": "1m",
+      "rules": [
+        {
+          "uid": "codex_stuck_candidate_detected",
+          "title": "Codex stuck candidate detected",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "range",
+              "relativeTimeRange": { "from": 120, "to": 0 },
+              "datasourceUid": "loki",
+              "model": {
+                "datasource": { "type": "loki", "uid": "loki" },
+                "editorMode": "code",
+                "expr": "sum by (run_hash, state) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=\"STUCK_CANDIDATE\" [2m]))",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "queryType": "range",
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "queryType": "expression",
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [],
+                "datasource": { "type": "__expr__", "uid": "__expr__" },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "settings": { "mode": "dropNN" },
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "queryType": "expression",
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": { "params": [0], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["C"] },
+                    "reducer": { "params": [], "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "datasource": { "type": "__expr__", "uid": "__expr__" },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "codex-stuck-burn-triage",
+          "panelId": 1,
+          "noDataState": "OK",
+          "execErrState": "OK",
+          "for": "0s",
+          "annotations": {
+            "summary": "A recent privacy-safe STUCK_CANDIDATE record needs investigation; this is not proof of a Codex bug.",
+            "dashboard": "http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage",
+            "playbook": "https://vishal8shah.github.io/codex-otel-grafana/#playbook"
+          },
+          "labels": {
+            "diagnostic": "codex_stuck_candidate",
+            "source": "derived",
+            "severity": "warning"
+          },
+          "isPaused": false,
+          "notification_settings": {
+            "receiver": "Codex local dev webhook",
+            "group_by": ["alertname", "grafana_folder", "run_hash"],
+            "group_wait": "10s",
+            "group_interval": "5m",
+            "repeat_interval": "4h"
+          }
+        }
+      ]
+    }
+  ]
+}
