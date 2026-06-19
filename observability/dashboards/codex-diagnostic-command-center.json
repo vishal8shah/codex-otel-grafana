@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "lookback",
+        "label": "Lookback",
+        "type": "custom",
+        "query": "15m,1h,6h,24h",
+        "current": { "selected": true, "text": "6h", "value": "6h" },
+        "options": [
+          { "selected": false, "text": "15m", "value": "15m" },
+          { "selected": false, "text": "1h", "value": "1h" },
+          { "selected": true, "text": "6h", "value": "6h" },
+          { "selected": false, "text": "24h", "value": "24h" }
+        ],
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "annotations": { "list": [] },
+  "version": 0,
+  "links": [
+    {
+      "type": "link",
+      "title": "Codex Stuck Triage",
+      "url": "/d/codex-stuck-burn-triage/codex-stuck-burn-triage?from=now-${lookback}&to=now",
+      "targetBlank": false
+    },
+    {
+      "type": "link",
+      "title": "Codex Tool Failure Diagnosis",
+      "url": "/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis?from=now-${lookback}&to=now",
+      "targetBlank": false
+    },
+    {
+      "type": "link",
+      "title": "Codex API Request Reliability",
+      "url": "/d/codex-api-request-reliability/codex-api-request-reliability?from=now-${lookback}&to=now",
+      "targetBlank": false
+    },
+    {
+      "type": "link",
+      "title": "Codex Slow Contributor Triage",
+      "url": "/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now",
+      "targetBlank": false
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Needs attention now",
+      "type": "text",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
+      "options": {
+        "mode": "markdown",
+        "content": "Select **Lookback** above. The four cards count unique privacy-safe issue groups from existing derived snapshots. The default is **6h**, matching every focused dashboard. A zero or empty card means only that no matching derived issue snapshot exists in the selected lookback; it does not prove health."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Stuck / incomplete runs",
+      "description": "Unique run_hash values with non-completed run-health evidence in the selected lookback.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 4, "w": 6, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash) (count_over_time({service_name=\"Codex Run Health\"} | event_name=\"codex.run_health\" | state=~\"SLOW_BUT_ALIVE|STUCK_CANDIDATE|UNKNOWN_INCOMPLETE\" [${lookback}])))",
+          "queryType": "range"
+        }
+      ],
+      "links": [
+        {
+          "title": "Open Codex Stuck Triage",
+          "url": "/d/codex-stuck-burn-triage/codex-stuck-burn-triage?from=now-${lookback}&to=now",
+          "targetBlank": false
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "Tool issue groups",
+      "description": "Unique run_hash + tool_name groups with failed, missing, or unknown result evidence in the selected lookback; not individual-call proof.",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 4, "w": 6, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash, tool_name) (count_over_time({service_name=\"Codex Tool Diagnosis\"} | event_name=\"codex.tool_diagnostic\" | state=~\"FAILED_RESULT|SELECTED_NO_RESULT|UNKNOWN_RESULT\" [${lookback}])))",
+          "queryType": "range"
+        }
+      ],
+      "links": [
+        {
+          "title": "Open Codex Tool Failure Diagnosis",
+          "url": "/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis?from=now-${lookback}&to=now",
+          "targetBlank": false
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "title": "API reliability groups",
+      "description": "Unique run_hash + endpoint_hash groups with failed, retried, slow, or incomplete evidence in the selected lookback; not individual-request proof.",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 4, "w": 6, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash, endpoint_hash) (count_over_time({service_name=\"Codex API Diagnosis\"} | event_name=\"codex.api_diagnostic\" | state=~\"FAILED_REQUEST|RETRIED_REQUEST|SLOW_REQUEST|UNKNOWN_REQUEST\" [${lookback}])))",
+          "queryType": "range"
+        }
+      ],
+      "links": [
+        {
+          "title": "Open Codex API Request Reliability",
+          "url": "/d/codex-api-request-reliability/codex-api-request-reliability?from=now-${lookback}&to=now",
+          "targetBlank": false
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
+    },
+    {
+      "id": 5,
+      "title": "Slow contributor groups",
+      "description": "Unique shipped contributor groups in the selected lookback; contributor-level evidence, not full-turn latency.",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 4, "w": 6, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash, contributor_type, endpoint_hash, tool_name) (count_over_time({service_name=\"Codex Slow Contributor Diagnosis\"} | event_name=\"codex.slow_contributor\" | state=~\"SLOW_API_CONTRIBUTOR|SLOW_TOOL_CONTRIBUTOR|MULTIPLE_SLOW_CONTRIBUTORS\" [${lookback}])))",
+          "queryType": "range"
+        }
+      ],
+      "links": [
+        {
+          "title": "Open Codex Slow Contributor Triage",
+          "url": "/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now",
+          "targetBlank": false
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
+    },
+    {
+      "id": 6,
+      "title": "Start here",
+      "type": "text",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "options": {
+        "mode": "markdown",
+        "content": "| Evidence category | Open first | What to inspect |\n|---|---|---|\n| Stuck or incomplete run | [Codex Stuck Triage](/d/codex-stuck-burn-triage/codex-stuck-burn-triage?from=now-${lookback}&to=now) | Privacy-safe run grouping, state, quiet time, and source window |\n| Failed or missing tool result | [Codex Tool Failure Diagnosis](/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis?from=now-${lookback}&to=now) | Run/tool grouping and result evidence |\n| Failed, retried, slow, or incomplete API evidence | [Codex API Request Reliability](/d/codex-api-request-reliability/codex-api-request-reliability?from=now-${lookback}&to=now) | Run/endpoint grouping, state, status bucket, and bounded duration/attempt evidence |\n| Slow API or tool contributor | [Codex Slow Contributor Triage](/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now) | Confirmed contributor grouping, duration, threshold, and source window |\n\nOpen the focused dashboard with the strongest non-zero category. Treat every category as investigation evidence, not proof of a product bug."
+      }
+    },
+    {
+      "id": 7,
+      "title": "Known boundaries",
+      "type": "text",
+      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 7 },
+      "options": {
+        "mode": "markdown",
+        "content": "- Summarizes existing privacy-safe **derived records only**; it does not classify source telemetry directly.\n- Analyzers and optional watchers must emit fresh derived snapshots. Silence or zero counts do not prove health.\n- CI validates static structure and unit behavior; it does not run the local telemetry-to-Grafana path.\n- These are navigation cues and investigation evidence, not proof of a product bug.\n- This is a light front door for an already-running local kit, not onboarding, alerting, notification replacement, or production monitoring.\n- Phase 6 stuck-notification semantics are unchanged."
+      }
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "derived", "navigation", "phase-7"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "hidden": true },
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Diagnostic Command Center",
+  "uid": "codex-diagnostic-command-center"
+}

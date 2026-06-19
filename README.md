@@ -39,6 +39,8 @@ It captures the setup we verified locally:
 - A focused Slow Contributor Triage panel using confirmed API/tool durations
 - An opt-in stuck-candidate notification path with a watcher, provisioned alert,
   and local development webhook receiver
+- A Diagnostic Command Center front door that summarizes shipped derived
+  evidence and routes users to the focused dashboard that needs attention first
 
 ## Dashboards
 
@@ -52,6 +54,7 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex Tool Failure Diagnosis](http://localhost:3000/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis)
 - [Codex API Request Reliability](http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability)
 - [Codex Slow Contributor Triage](http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage)
+- [Codex Diagnostic Command Center](http://localhost:3000/d/codex-diagnostic-command-center/codex-diagnostic-command-center)
 
 ## Capability Matrix
 
@@ -63,10 +66,39 @@ After setup, open Grafana with `admin` / `admin`:
 | Review/resume flow stalls | **Acknowledged** | No claim until required signals are confirmed in `SCHEMA.md`. |
 | API/backend reliability | **Shipped** | API Request Reliability groups confirmed request evidence by privacy-safe run and endpoint hashes. |
 | Slow confirmed contributors | **Shipped** | Slow Contributor Triage uses confirmed API and tool durations; it does not measure full turn latency. |
+| Where do I start? | **Shipped** | Diagnostic Command Center summarizes existing privacy-safe derived evidence by pain class and links to the focused dashboards. |
 | Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
 
 Token burn without completion was removed from Phase 2 because the required raw
 telemetry shape was not schema-backed. No native `codex_*` metrics are claimed.
+
+## Codex Diagnostic Command Center
+
+This light front door helps users who already have the local kit running decide
+where to look first when Codex feels stuck, slow, broken, or tool/API unreliable.
+It summarizes only existing privacy-safe derived streams; it does not add a new
+classifier or read raw Codex telemetry directly.
+
+Open **Grafana > Codex Diagnostic Command Center** and choose one shared
+lookback. The default is six hours because every focused diagnostic dashboard
+uses `now-6h` by default. Category cards deduplicate repeated analyzer snapshots
+at each shipped grouping grain and link to the corresponding focused dashboard.
+A zero or empty category means no matching derived issue snapshot was present in
+the selected lookback; silence does not prove Codex is healthy.
+
+### Command Center Playbook
+
+- **Symptom:** Codex feels wrong, but I do not know which diagnostic to open first.
+- **Panel:** **Codex Diagnostic Command Center**.
+- **Meaning:** existing privacy-safe derived evidence is summarized by pain
+  class. A non-green area tells you which focused diagnostic to open.
+- **Next action:** open the linked focused dashboard and inspect the relevant
+  privacy-safe grouping. Treat it as investigation evidence, not proof of a
+  Codex bug.
+
+The Command Center is navigation for an already-running local kit. It does not
+solve onboarding or setup friction, replace Phase 6 alerting/notification,
+provide production monitoring, or make the derived-evidence path always-on.
 
 ## Codex Stuck Triage
 
@@ -316,6 +348,9 @@ Start, stop, datasource provisioning, and dashboard provisioning are
 cross-platform. Docker Compose mounts the repository-owned Grafana provisioning
 files and dashboards read-only, so macOS and Linux do not need `pwsh` for the
 normal setup path.
+
+Once the kit is running, open **Codex Diagnostic Command Center** as the front
+door. It is not an installation or onboarding workflow.
 
 ### CI scope
 
