@@ -14,14 +14,21 @@ bodies are discarded after the allowlisted fields are extracted.
 Raw endpoint values are never exported. The analyzer uses
 `run_hash + endpoint_hash` because there is no confirmed safe per-request ID
 and retained real endpoint values were unavailable for a defensible
-low-cardinality mapping review. When `CODEX_API_DIAG_HASH_KEY` is set, both
-hashes use HMAC-SHA256. If it is unset, the analyzer warns before falling back
-to plain SHA-256. Hashing low-entropy endpoint values is a privacy boundary,
-not anonymization; use a private key for shared or retained environments.
+low-cardinality mapping review. This conservative hash is privacy-safe but less
+readable than a future `endpoint_kind`. Add `endpoint_kind` only after real
+endpoint values are reviewed for cardinality and privacy; never expose raw
+endpoint values by default. When `CODEX_API_DIAG_HASH_KEY` is set, both hashes
+use HMAC-SHA256. If it is unset, the analyzer warns before falling back to plain
+SHA-256. Hashing low-entropy endpoint values is a privacy boundary, not
+anonymization; use a private key for shared or retained environments.
 
 The result is run/endpoint-level investigation evidence, not proof about an
-individual request and not proof of a Codex service bug. Attempts are not
-summed as failures. `max_attempt > 1` is retained as a group-level retry flag.
+individual request. A `FAILED_REQUEST` group can also contain successful
+request evidence from the same selected window; failure wins because the
+precedence is intentionally conservative. `RETRIED_REQUEST` and `SLOW_REQUEST`
+are group-level investigation evidence, not proof of a Codex service bug.
+Attempts are not summed as failures. `max_attempt > 1` is retained as a
+group-level retry flag.
 Repeated analyzer emissions may create repeated snapshot rows in the table;
 stat panels count unique `run_hash + endpoint_hash` groups over the selected
 range.

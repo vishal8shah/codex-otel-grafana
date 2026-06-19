@@ -148,9 +148,18 @@ or unique tool names over the selected range.
 
 This focused analyzer groups schema-confirmed `codex.api_request` logs by
 privacy-safe `run_hash + endpoint_hash`. Raw endpoints are never exported, and
-there is no confirmed safe per-request identifier. The diagnostic therefore
+retained real endpoint values were unavailable for a defensible cardinality and
+privacy review. The hash is conservative and privacy-safe, but less readable
+than a future low-cardinality `endpoint_kind`. Add `endpoint_kind` only after
+real endpoint values have been reviewed; raw endpoint values must not be
+exposed by default.
+
+There is no confirmed safe per-request identifier. The diagnostic therefore
 provides run/endpoint-level evidence, not proof that one individual request
-failed and not proof of a Codex service bug.
+failed. A `FAILED_REQUEST` group may also contain successful request evidence
+from the selected window; failure wins because precedence is intentionally
+conservative. `RETRIED_REQUEST` and `SLOW_REQUEST` are group-level
+investigation evidence, not proof of a Codex service bug.
 
 ```text
 .\scripts\api-reliability.ps1

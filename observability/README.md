@@ -144,10 +144,18 @@ and one privacy-safe triage table. Stats deduplicate repeated emissions by
 `run_hash + endpoint_hash`; the table remains a snapshot view.
 
 Raw endpoint and conversation values are hashed and dropped before derived
-emission. No per-request identifier is confirmed, so this is run/endpoint-level
-evidence rather than proof about one request or a Codex service bug. State
-precedence is failed, retried, slow, successful, then unknown. The configurable
-slow threshold is for local investigation, not an SLO.
+emission. Retained real endpoint values were unavailable for a defensible
+low-cardinality mapping review, so `endpoint_hash` is used even though it is
+less readable than a future `endpoint_kind`. Add `endpoint_kind` only after real
+values are reviewed for cardinality and privacy; never expose raw endpoints by
+default.
+
+No per-request identifier is confirmed, so this is run/endpoint-level evidence
+rather than proof about one request. A `FAILED_REQUEST` group may also contain
+successful evidence from the same window; failure wins under the intentionally
+conservative precedence. `RETRIED_REQUEST` and `SLOW_REQUEST` remain
+group-level investigation evidence, not proof of a Codex service bug. The
+configurable slow threshold is for local investigation, not an SLO.
 
 ```text
 python tools/api-reliability/api_reliability.py --dry-run
