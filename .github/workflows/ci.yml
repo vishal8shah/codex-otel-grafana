@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run analyzer unit tests
+        run: |
+          python -m unittest discover -s tools/run-health/tests
+          python -m unittest discover -s tools/tool-failure/tests
+          python -m unittest discover -s tools/api-reliability/tests
+          python -m unittest discover -s tools/slow-contributor/tests
+
+      - name: Compile Python files
+        run: python -m compileall -q tools scripts
+
+      - name: Validate dashboard JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = sorted(Path("observability/dashboards").glob("*.json"))
+          if not files:
+              raise SystemExit("No dashboard JSON files found")
+          for path in files:
+              with path.open(encoding="utf-8") as handle:
+                  json.load(handle)
+          print(f"Validated {len(files)} dashboard JSON files")
+          PY
+
+      - name: Validate Docker Compose config
+        run: docker compose config --quiet
+
+      - name: Validate Bash syntax
+        run: |
+          mapfile -d '' scripts < <(find scripts -type f -name '*.sh' -print0)
+          for script in "${scripts[@]}"; do
+            bash -n "$script"
+          done
+
+      - name: Validate PowerShell syntax
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -Command '
+              $errors = @()
+              Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
+                $tokens = $null
+                $parseErrors = $null
+                [System.Management.Automation.Language.Parser]::ParseFile(
+                  $_.FullName,
+                  [ref]$tokens,
+                  [ref]$parseErrors
+                ) | Out-Null
+                $errors += $parseErrors
+              }
+              if ($errors.Count -gt 0) {
+                $errors | Format-List
+                exit 1
+              }
+            '
+          else
+            echo "::notice::PowerShell syntax check skipped because pwsh is unavailable on this runner."
+          fi
+
+      - name: Validate docs links and anchors
+        run: python scripts/validate-docs.py
