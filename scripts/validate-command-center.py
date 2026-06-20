@@ -184,7 +184,7 @@ def main() -> int:
         "Codex Diagnostic Command Center",
         "existing privacy-safe derived",
         "not onboarding",
-        "not production monitoring",
+        "not intended for operating production systems",
     ):
         if required.lower() not in documentation.lower():
             raise AssertionError(f"Focused docs are missing the Command Center boundary: {required}")

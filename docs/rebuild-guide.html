@@ -28,7 +28,7 @@ metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics"
 
         <h2 id="command-center">Choose where to start</h2>
         <p>Open <strong>Grafana &gt; Codex Diagnostic Command Center</strong> after the local kit is running. Its shared lookback defaults to six hours to match the focused dashboards. It summarizes existing privacy-safe derived streams and links to Stuck Triage, Tool Failure Diagnosis, API Request Reliability, and Slow Contributor Triage.</p>
-        <p class="callout">This is a light navigation front door, not an onboarding or installation flow. It adds no classifier, reads no raw Codex telemetry directly, does not replace Phase 6 notification, and is not production monitoring. Zero or missing derived records do not prove health.</p>
+        <p class="callout">This is a light navigation front door, not an onboarding or installation flow. It adds no classifier, reads no raw Codex telemetry directly, does not replace Phase 6 notification, and is not intended for operating production systems. Zero or missing derived records do not prove health.</p>
 
         <h2 id="triage">Run Codex Stuck Triage</h2>
         <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>.\scripts\run-health.ps1

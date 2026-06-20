@@ -29,10 +29,17 @@ UNSAFE_PNG_MARKERS = (
 )
 FORBIDDEN_PUBLIC_CLAIMS = (
     "codex observability platform",
+    "observability platform",
+    "monitoring platform",
+    "production observability",
+    "production monitoring",
     "full codex observability",
     "complete codex observability",
+    "complete coverage",
     "tracks all codex behaviour",
     "tracks all codex behavior",
+    "proves codex is healthy",
+    "proves a codex bug",
     "automatic root cause",
     "root cause automatically found",
 )
