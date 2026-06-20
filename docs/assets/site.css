@@ -149,7 +149,7 @@ a:hover {
   min-height: 48px;
   margin-bottom: 16px;
   color: var(--ink);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 850;
 }
 
@@ -162,6 +162,40 @@ a:hover {
   border-radius: 8px;
   color: var(--teal-2);
   font-weight: 900;
+}
+
+.built-on {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  margin: 22px 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.built-on ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.built-on li {
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 8%, var(--panel));
+  color: var(--teal-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .nav-section {

@@ -27,6 +27,22 @@ UNSAFE_PNG_MARKERS = (
     b"c:\\",
     b"/users/",
 )
+FORBIDDEN_PUBLIC_CLAIMS = (
+    "codex observability platform",
+    "observability platform",
+    "monitoring platform",
+    "production observability",
+    "production monitoring",
+    "full codex observability",
+    "complete codex observability",
+    "complete coverage",
+    "tracks all codex behaviour",
+    "tracks all codex behavior",
+    "proves codex is healthy",
+    "proves a codex bug",
+    "automatic root cause",
+    "root cause automatically found",
+)
 
 
 def validate_walkthrough_png(path: Path) -> list[str]:
@@ -133,6 +149,9 @@ def main() -> int:
         for banned in ("fonts.googleapis.com", "fonts.gstatic.com", "mermaid.min.js", "cdn.jsdelivr.net"):
             if banned in text:
                 errors.append(f"{source.name}: forbidden external dependency marker {banned}")
+        for claim in FORBIDDEN_PUBLIC_CLAIMS:
+            if claim in text:
+                errors.append(f"{source.name}: forbidden public claim {claim}")
 
     css_path = DOCS_ROOT / "assets" / "site.css"
     css_text = css_path.read_text(encoding="utf-8").lower()
