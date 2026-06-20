@@ -1,10 +1,35 @@
 # Codex Observability Diagnostic Kit
 
+**[Live documentation](https://vishal8shah.github.io/codex-otel-grafana/)** ·
+**[Five-command onboarding](docs/onboarding.html)** ·
+**[Architecture and privacy boundaries](docs/architecture-and-operations.html)**
+
+![Codex Diagnostic Command Center dashboard with synthetic example data showing recent non-green issue categories](docs/assets/dashboard-walkthrough/command-center.png)
+
+_Synthetic example data. The Command Center surfaces recent derived issue categories and routes to focused dashboards; it does not rank issues or prove a Codex bug._
+
+When Codex goes quiet, fails around tools, retries API calls, or feels slow, it
+is hard to know what actually happened.
+
 This repository provides a local-first diagnostic kit for OpenAI Codex on
 Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
 For developers running Codex locally who want privacy-safe evidence about
 stuck runs, tool failures, API request reliability, and slow contributors.
+
+## Start Here
+
+| If you want to... | Start with... |
+|---|---|
+| Understand the project before installing anything | **[Explore the live documentation](https://vishal8shah.github.io/codex-otel-grafana/)** |
+| Run the witnessed Windows setup proof | [Run the five-command onboarding proof](docs/onboarding.html) |
+| Rebuild or configure the stack manually | [Use the full setup guide](docs/rebuild-guide.html) |
+| Understand what data crosses the privacy boundary | [Inspect the architecture and privacy model](docs/architecture-and-operations.html) |
+
+The kit helps investigate four focused pain classes: stuck or incomplete runs,
+failed or missing tool results, API request reliability, and slow confirmed API
+or tool contributors. The Diagnostic Command Center surfaces those categories
+and routes to the relevant dashboard; it does not rank them.
 
 ## Positioning
 
@@ -27,7 +52,7 @@ It captures the setup we verified locally:
   OpenTelemetry Collector
 - Codex user-level telemetry config in `%USERPROFILE%\.codex\config.toml`
 
-## Fastest Safe Local Proof
+## Five-Command Onboarding Proof
 
 Windows is the witnessed first-run path:
 
@@ -62,7 +87,7 @@ and prints the Command Center URL. See the detailed
 - An opt-in stuck-candidate notification path with a watcher, provisioned alert,
   and local development webhook receiver
 - A Diagnostic Command Center front door that summarizes shipped derived
-  evidence and routes users to the focused dashboard that needs attention first
+  evidence and routes users to the relevant focused dashboard
 
 ## Dashboards
 
@@ -326,7 +351,7 @@ Repeated emissions may create table snapshots; stats count unique contributor
 groups over the selected range. See
 [the schema gate and analyzer guide](tools/slow-contributor/README.md).
 
-## Quick Start
+## Full Manual Setup
 
 Copy `.env.example` to `.env` only if you need to change the safe local
 defaults. The Compose configuration publishes Grafana and both OTLP receivers
@@ -453,9 +478,11 @@ The important detail is the inline exporter table. A plain
 
 ## Documentation
 
-GitHub Pages-ready documentation lives under `docs/`:
+Start with the **[live documentation site](https://vishal8shah.github.io/codex-otel-grafana/)**.
+The same dependency-free pages live under `docs/` in the repository:
 
-- [Documentation Home](docs/index.html)
+- [Documentation source](docs/index.html)
+- [Five-command Onboarding Proof](docs/onboarding.html)
 - [Manual Rebuild Guide](docs/rebuild-guide.html)
 - [Architecture and Operations](docs/architecture-and-operations.html)
 - [Diagnostic Capability Status](docs/builder-metrics.html)
