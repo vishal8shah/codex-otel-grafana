@@ -3,6 +3,9 @@
 This repository provides a local-first diagnostic kit for OpenAI Codex on
 Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
+For developers running Codex locally who want privacy-safe evidence about
+stuck runs, tool failures, API request reliability, and slow contributors.
+
 ## Positioning
 
 This project is local-first, privacy-first, and issue-led. It targets real
@@ -103,7 +106,7 @@ lookback. The default is six hours because every focused diagnostic dashboard
 uses `now-6h` by default. Category cards deduplicate repeated analyzer snapshots
 at each shipped grouping grain and link to the corresponding focused dashboard.
 A zero or empty category means no matching derived issue snapshot was present in
-the selected lookback; silence does not prove Codex is healthy.
+the selected lookback; silence is not health evidence.
 
 ### Command Center Playbook
 
@@ -117,7 +120,7 @@ the selected lookback; silence does not prove Codex is healthy.
 
 The Command Center is navigation for an already-running local kit. It does not
 solve onboarding or setup friction, replace Phase 6 alerting/notification,
-provide production monitoring, or make the derived-evidence path always-on.
+support operating production systems, or make the derived-evidence path always-on.
 
 ## Codex Stuck Triage
 
@@ -175,10 +178,10 @@ confirmed bug. See [the notification guide](tools/alerting/README.md).
 Notification requires the complete chain: LGTM/Grafana running, Codex telemetry
 arriving, watcher/analyzer emitting derived records, provisioned alert rule,
 configured contact point/routing, and a reachable destination. If any link is
-missing, silence does not prove Codex is healthy.
+missing, silence is not health evidence.
 
 The provisioned `noDataState=OK` and `execErrState=OK` settings are fail-open by
-design for development proof. Silence may mean healthy, but it can also mean the
+design for development proof. An absence of notifications can also mean the
 analyzer stopped, Loki/query evaluation failed, provisioning or routing failed,
 or the destination was unreachable.
 
@@ -190,7 +193,7 @@ or the destination was unreachable.
   quiet time beyond the stuck threshold, based on confirmed raw telemetry.
 - **Next action:** inspect `run_hash`, `state`, `quiet_for_seconds`,
   `last_event`, `model`, and the source time window. Treat it as a stuck
-  candidate, not proof of a Codex bug.
+  candidate, not a Codex bug verdict.
 
 `run_hash` is a privacy-safe hash of the source run identifier; the raw value is
 never shown. Derived `codex.run_health` records are not native Codex telemetry,
@@ -230,7 +233,7 @@ specific call failed to dispatch or return.
 - **Next action:** inspect `tool_name`, result state, timing/window, and
   surrounding raw telemetry. Check MCP/server setup, tool availability,
   permissions, and local command/runtime assumptions. Treat the diagnostic as
-  evidence for investigation, not proof of a Codex bug.
+  evidence for investigation, not a Codex bug verdict.
 
 Raw call IDs, arguments, output, prompts, identities, and local paths are never
 emitted. Model/provider are omitted because a safe same-record correlation is
@@ -479,10 +482,15 @@ diagnose, detect, explain, reproduce, or gather evidence.
 
 ## Status
 
-This is a local development and diagnostics setup. It is not a production
-observability deployment. Do not expose Grafana or OTLP ports publicly without
-authentication, TLS, network controls, and a reviewed retention/redaction policy.
+This is a local development and diagnostics setup. It is not intended for
+operating production systems. Do not expose Grafana or OTLP ports publicly
+without authentication, TLS, network controls, and a reviewed
+retention/redaction policy.
 
 For lightweight validation after setup, run `docker compose config`, the
 platform doctor and schema verifier, and then inspect Loki and Tempo after one
 small non-sensitive interactive Codex prompt.
+
+## License
+
+MIT.
