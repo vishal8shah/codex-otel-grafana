@@ -1,4 +1,4 @@
-# Codex Diagnostic Kit
+# Codex Observability Diagnostic Kit
 
 This repository provides a local-first diagnostic kit for OpenAI Codex on
 Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
@@ -23,6 +23,25 @@ It captures the setup we verified locally:
 - Grafana, Loki, Tempo, Prometheus/Mimir-compatible metrics, and the
   OpenTelemetry Collector
 - Codex user-level telemetry config in `%USERPROFILE%\.codex\config.toml`
+
+## Fastest Safe Local Proof
+
+Windows is the witnessed first-run path:
+
+```powershell
+py --version
+.\scripts\preflight.ps1
+.\scripts\start.ps1
+python scripts/health-check.py
+python scripts/run-onboarding-demo.py
+```
+
+The proof uses synthetic data only, invokes the existing `walkthrough-rich`
+emitter and shipped analyzers, verifies privacy-safe unique groups through Loki,
+and prints the Command Center URL. See the detailed
+[onboarding setup proof](docs/onboarding.html), the
+[public walkthrough](https://vishal8shah.github.io/codex-otel-grafana/), and the
+[troubleshooting matrix](docs/onboarding.html#troubleshooting).
 
 ## What You Get
 

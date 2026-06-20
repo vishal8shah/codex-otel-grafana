@@ -83,6 +83,20 @@ class DemoScenarioTests(unittest.TestCase):
         for key in demo.UNSAFE_KEYS:
             self.assertNotIn(f"'key': '{key}'", serialized)
 
+    def test_privacy_safe_group_summary_allowlists_grouping_fields(self):
+        rows = [
+            {
+                "run_hash": "safe-run",
+                "tool_name": "synthetic_reader",
+                "state": "SUCCESSFUL_RESULT",
+                "unsafe_source_identifier": "must-not-pass",
+            }
+        ]
+        self.assertEqual(
+            demo.privacy_safe_groups("tool_failure", rows),
+            [{"run_hash": "safe-run", "tool_name": "synthetic_reader", "state": "SUCCESSFUL_RESULT"}],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -29,6 +29,12 @@ DERIVED_EVENTS = {
     "codex.api_diagnostic",
     "codex.slow_contributor",
 }
+GROUP_FIELDS = {
+    "run_health": ("run_hash",),
+    "tool_failure": ("run_hash", "tool_name"),
+    "api_reliability": ("run_hash", "endpoint_hash"),
+    "slow_contributor": ("run_hash", "contributor_type", "endpoint_hash", "tool_name"),
+}
 ALLOWED_RAW_EVENTS = {
     "codex.conversation_starts",
     "codex.sse_event",
@@ -397,6 +403,18 @@ def state_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
     return dict(collections.Counter(str(row.get("state", "")) for row in rows))
 
 
+def privacy_safe_groups(name: str, rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    if name not in GROUP_FIELDS:
+        raise ValueError(f"Unknown diagnostic group: {name}")
+    return [
+        {
+            **{field: str(row.get(field, "")) for field in GROUP_FIELDS[name]},
+            "state": str(row.get("state", "")),
+        }
+        for row in rows
+    ]
+
+
 def run_analyzer(
     name: str,
     config: dict[str, Any],
@@ -532,6 +550,7 @@ def main(argv: list[str] | None = None) -> int:
                     "unique_groups_expected": scenario["expected_groups"],
                     "derived_groups_emitted": len(rows),
                     "states": state_counts(rows),
+                    "privacy_safe_groups": privacy_safe_groups(name, rows),
                 }
 
         if args.report_json:
