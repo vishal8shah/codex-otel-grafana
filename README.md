@@ -4,6 +4,13 @@
 **[Five-command onboarding](docs/onboarding.html)** ·
 **[Architecture and privacy boundaries](docs/architecture-and-operations.html)**
 
+![Codex Diagnostic Command Center dashboard with synthetic example data showing recent non-green issue categories](docs/assets/dashboard-walkthrough/command-center.png)
+
+_Synthetic example data. The Command Center surfaces recent derived issue categories and routes to focused dashboards; it does not rank issues or prove a Codex bug._
+
+When Codex goes quiet, fails around tools, retries API calls, or feels slow, it
+is hard to know what actually happened.
+
 This repository provides a local-first diagnostic kit for OpenAI Codex on
 Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
@@ -15,7 +22,7 @@ stuck runs, tool failures, API request reliability, and slow contributors.
 | If you want to... | Start with... |
 |---|---|
 | Understand the project before installing anything | **[Explore the live documentation](https://vishal8shah.github.io/codex-otel-grafana/)** |
-| Prove the complete local path on Windows | [Run the five-command onboarding proof](docs/onboarding.html) |
+| Run the witnessed Windows setup proof | [Run the five-command onboarding proof](docs/onboarding.html) |
 | Rebuild or configure the stack manually | [Use the full setup guide](docs/rebuild-guide.html) |
 | Understand what data crosses the privacy boundary | [Inspect the architecture and privacy model](docs/architecture-and-operations.html) |
 
