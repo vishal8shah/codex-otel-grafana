@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Onboarding proof | Codex Observability Diagnostic Kit</title>
+    <meta name="description" content="A witnessed Windows path from clone to privacy-safe synthetic Codex diagnostics in local Grafana.">
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body><div class="app-shell">
+    <aside class="sidebar" aria-label="Documentation navigation">
+      <a class="brand" href="index.html" aria-label="Codex Observability Diagnostic Kit home"><span class="brand-mark" aria-hidden="true">&#9670;</span><span>Codex Observability Diagnostic Kit</span></a>
+      <nav>
+        <div class="nav-section"><a class="nav-link" href="index.html"><span class="nav-icon">01</span>Overview</a><a class="nav-link" href="rebuild-guide.html"><span class="nav-icon">02</span>Quickstart</a><a class="nav-link active" href="onboarding.html"><span class="nav-icon">03</span>Onboarding</a></div>
+        <div class="nav-section"><p class="nav-heading">Clone to proof</p><a class="nav-sub" href="#promise">What this proves</a><a class="nav-sub" href="#prerequisites">Prerequisites</a><a class="nav-sub" href="#windows">Windows path</a><a class="nav-sub" href="#success">Success criteria</a><a class="nav-sub" href="#stop">Stop and reset</a><a class="nav-sub" href="#troubleshooting">Troubleshooting</a><a class="nav-sub" href="#privacy">Privacy and limits</a></div>
+        <div class="nav-section"><p class="nav-heading">Deep dives</p><a class="nav-sub" href="index.html#walkthrough">Dashboard walkthrough</a><a class="nav-sub" href="architecture-and-operations.html">Architecture</a><a class="nav-sub" href="rebuild-guide.html">Manual quickstart</a></div>
+      </nav>
+      <div class="help-card"><span class="signal-dot"></span><strong>Synthetic first run</strong><p>Use the repository demo profile. Do not use private work data for onboarding.</p></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div class="search-wrap"><input id="docSearch" class="search" placeholder="Search onboarding..." aria-label="Search onboarding"><span class="shortcut">Ctrl K</span></div><div class="top-actions"><a class="button" href="https://github.com/vishal8shah/codex-otel-grafana">GitHub &#8599;</a><a class="button" href="index.html#walkthrough">Walkthrough</a><button id="themeToggle" class="icon-button" type="button" aria-label="Switch theme">&#9790;</button></div></header>
+      <div class="content article" data-search>
+        <p class="eyebrow">Witnessed local setup</p>
+        <h1>Clone to a useful Command Center without hand-shaped evidence.</h1>
+        <p class="lead">This path checks prerequisites, starts the loopback-only LGTM stack, emits safe synthetic evidence, runs the shipped analyzers, verifies their privacy-safe groups through Loki, and prints the Grafana views to open.</p>
+
+        <h2 id="promise">What this proves</h2>
+        <p>A successful run proves that this checkout can move synthetic source evidence through the real local paths:</p>
+        <pre>synthetic OTLP logs -> Loki -> shipped analyzers -> derived records -> Grafana
+synthetic OTLP traces -> Tempo -> generated spanmetrics -> Prometheus / Grafana</pre>
+        <p class="callout">It proves a local synthetic investigation path. It does not establish system health or identify a Codex bug; the kit remains intentionally scoped and is not for operating production systems.</p>
+
+        <h2 id="prerequisites">Prerequisites</h2>
+        <ul><li>Git</li><li>Python 3.10 or newer</li><li>Docker Desktop or Docker Engine with the Compose plugin</li><li>Local ports <code>3000</code>, <code>4317</code>, and <code>4318</code> available</li><li>No API key, cloud account, or notification destination</li></ul>
+        <p>Check that Python exists before asking Python to inspect anything:</p>
+        <div class="grid-2"><article class="article-card"><h3>Windows PowerShell</h3><pre>py --version
+python --version
+.\scripts\preflight.ps1</pre><p>The launcher chooses <code>py -3</code> first and falls back to <code>python</code>. It installs nothing.</p></article><article class="article-card"><h3>Linux / WSL / macOS</h3><pre>python3 --version
+python --version
+python3 scripts/preflight.py</pre><p>The Python preflight is cross-platform. This cycle's witnessed end-to-end run is Windows; bash parity is not claimed here.</p></article></div>
+
+        <h2 id="windows">Windows: clone-to-Command-Center proof</h2>
+        <ol>
+          <li><strong>Clone and enter the repository.</strong><pre>git clone https://github.com/vishal8shah/codex-otel-grafana.git
+cd codex-otel-grafana</pre></li>
+          <li><strong>Run local-only preflight.</strong><pre>.\scripts\preflight.ps1</pre></li>
+          <li><strong>Start the repository-owned stack.</strong><pre>.\scripts\start.ps1</pre></li>
+          <li><strong>Check Grafana, Loki, Tempo, Prometheus, and OTLP readiness.</strong><pre>python scripts/health-check.py</pre></li>
+          <li><strong>Emit and verify the existing walkthrough-rich profile.</strong><pre>python scripts/run-onboarding-demo.py --report-json "$env:TEMP\codex-onboarding-proof.json"</pre></li>
+          <li><strong>Open the printed Command Center URL.</strong> Use the printed 30-minute window, then follow its links to the four focused dashboards.</li>
+        </ol>
+        <p>The proof wrapper does not duplicate classifier logic or inject derived rows. It invokes <code>scripts/emit-demo-scenarios.py --profile walkthrough-rich</code>; that emitter runs the shipped analyzers, and the wrapper polls Loki for the exact privacy-safe group keys returned by the current profile.</p>
+
+        <h2 id="success">What success looks like</h2>
+        <p>The command prints expected and observed unique groups at the shipped grains:</p>
+        <ul><li><code>run_hash</code> for run health</li><li><code>run_hash + tool_name</code> for tool evidence</li><li><code>run_hash + endpoint_hash</code> for API evidence</li><li>the shipped run/contributor/endpoint/tool grain for slow contributors</li></ul>
+        <p>Repeated analyzer snapshots cannot increase these set-based counts. Command Center issue counts are derived from the current dashboard state filters rather than copied literal totals.</p>
+        <p>Open these printed views:</p>
+        <ul><li>Codex Diagnostic Command Center</li><li>Codex Stuck Triage</li><li>Codex Tool Failure Diagnosis</li><li>Codex API Request Reliability</li><li>Codex Slow Contributor Triage</li></ul>
+        <p>Use the <a href="index.html#walkthrough">synthetic dashboard walkthrough</a> to understand each panel. Local values need not look pixel-identical to the public captures; the proof report and unique groups are authoritative.</p>
+
+        <h2 id="stop">Stop and reset safely</h2>
+        <div class="grid-2"><article class="article-card"><h3>Stop, retain local data</h3><pre>.\scripts\stop.ps1</pre><p>Stops the Compose service and preserves the named data volume.</p></article><article class="article-card"><h3>Remove container/network, retain data</h3><pre>.\scripts\stop.ps1 -Remove</pre><p>Removes the Compose container and network while preserving the named data volume. Restart with <code>.\scripts\start.ps1</code>.</p></article></div>
+        <p>No destructive volume reset is part of the onboarding path.</p>
+
+        <h2 id="troubleshooting">Troubleshooting</h2>
+        <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Check</th><th>Next action</th></tr></thead><tbody>
+          <tr><td>Grafana does not load</td><td>Stack not started</td><td><code>python scripts/health-check.py</code></td><td>Run <code>.\scripts\start.ps1</code>.</td></tr>
+          <tr><td>Docker daemon unavailable</td><td>Docker Desktop is stopped</td><td><code>.\scripts\preflight.ps1</code></td><td>Start Docker Desktop, then rerun preflight.</td></tr>
+          <tr><td>Port conflict</td><td>Another local process owns a required port</td><td>Read the preflight port result</td><td>Stop the conflicting process or use the existing documented local override.</td></tr>
+          <tr><td>No dashboard data</td><td>Demo did not run, derived records are missing, or the time window is wrong</td><td>Run the onboarding proof and use its printed 30-minute URLs</td><td>Rerun the proof; do not widen claims from an empty view.</td></tr>
+          <tr><td>Command Center is empty</td><td>Derived emission or Loki verification did not complete</td><td>Compare expected and observed groups in the proof output</td><td>Resolve the reported diagnostic mismatch and rerun.</td></tr>
+          <tr><td>Local view differs from public screenshot</td><td>Time and retained synthetic snapshots differ</td><td>Expected</td><td>Use the proof output, not pixel matching.</td></tr>
+        </tbody></table></div>
+
+        <h2 id="privacy">Privacy, safety, and known limits</h2>
+        <ul><li>Use synthetic onboarding data only; do not substitute real prompts, customer data, identities, paths, endpoints, arguments, or output.</li><li>Keep <code>log_user_prompt=false</code> in Codex telemetry configuration.</li><li>Raw identifiers are not suitable for public screenshots; shipped derived records use privacy-safe hashes and allowlisted fields.</li><li>Derived records are summaries, not raw telemetry dumps or bug verdicts.</li><li>Silence does not prove health. Analyzers, storage, queries, and the selected time window must all work.</li><li>No native <code>codex_*</code> Prometheus metrics are required or claimed.</li></ul>
+        <p class="callout">Phase 6 stuck notification remains optional advanced reading. The default onboarding path does not start a webhook listener, widen a listener bind, or change firewall exposure.</p>
+      </div>
+    </main>
+  </div><script src="assets/site.js"></script></body>
+</html>

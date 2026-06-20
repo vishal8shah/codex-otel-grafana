@@ -9,7 +9,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-DOCS_ROOT = Path(__file__).resolve().parents[1] / "docs"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DOCS_ROOT = REPO_ROOT / "docs"
 EXTERNAL_SCHEMES = ("http:", "https:", "mailto:", "javascript:", "data:")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 EXPECTED_WALKTHROUGH_SIZE = (1280, 720)
@@ -129,6 +130,42 @@ def main() -> int:
         raise SystemExit("No public HTML docs found")
 
     errors: list[str] = []
+
+    onboarding_path = DOCS_ROOT / "onboarding.html"
+    if onboarding_path.resolve() not in pages:
+        errors.append("onboarding.html: required onboarding page is missing")
+    else:
+        onboarding_text = onboarding_path.read_text(encoding="utf-8").lower()
+        required_markers = (
+            "py --version",
+            ".\\scripts\\preflight.ps1",
+            "python scripts/health-check.py",
+            "python scripts/run-onboarding-demo.py",
+            ".\\scripts\\start.ps1",
+            ".\\scripts\\stop.ps1",
+            "log_user_prompt=false",
+            "synthetic onboarding data only",
+        )
+        for marker in required_markers:
+            if marker not in onboarding_text:
+                errors.append(f"onboarding.html: required onboarding marker is missing: {marker}")
+        for forbidden_default in ("--host 0.0.0.0", "dev_webhook_listener.py", "watch-stuck"):
+            if forbidden_default in onboarding_text:
+                errors.append(f"onboarding.html: Phase 6 notification command entered the default onboarding path: {forbidden_default}")
+
+    readme_path = REPO_ROOT / "README.md"
+    readme_text = readme_path.read_text(encoding="utf-8").lower()
+    if "docs/onboarding.html" not in readme_text:
+        errors.append("README.md: onboarding entry point is missing")
+    for relative in (
+        "scripts/preflight.py",
+        "scripts/preflight.ps1",
+        "scripts/health-check.py",
+        "scripts/run-onboarding-demo.py",
+        "scripts/emit-demo-scenarios.py",
+    ):
+        if not (REPO_ROOT / relative).is_file():
+            errors.append(f"onboarding command target is missing: {relative}")
     for source, parser in pages.items():
         for url in parser.external_assets:
             errors.append(f"{source.name}: external asset dependency {url}")
