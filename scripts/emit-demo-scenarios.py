@@ -106,6 +106,69 @@ def payload(records: list[dict[str, Any]], scope_name: str) -> dict[str, Any]:
     }
 
 
+def trace_payload(now: dt.datetime) -> dict[str, Any]:
+    """Build standard synthetic spans for the shipped Tempo/spanmetrics views."""
+    span_shapes = (
+        ("turn/start", 1, 180),
+        ("model_client.stream_responses_websocket", 3, 820),
+        ("dispatch_tool_call_with_terminal_outcome", 3, 460),
+        ("handle_tool_call", 1, 240),
+        ("responses_websocket.stream_request", 3, 1250),
+        ("stream_request", 3, 980),
+        ("shell_command", 1, 120),
+    )
+    spans: list[dict[str, Any]] = []
+    for index, (name, kind, duration_ms) in enumerate(span_shapes):
+        end = now - dt.timedelta(seconds=(len(span_shapes) - index))
+        start = end - dt.timedelta(milliseconds=duration_ms)
+        spans.append(
+            {
+                "traceId": uuid.uuid4().hex,
+                "spanId": uuid.uuid4().hex[:16],
+                "name": name,
+                "kind": kind,
+                "startTimeUnixNano": nanoseconds(start),
+                "endTimeUnixNano": nanoseconds(end),
+                "attributes": [
+                    {"key": "synthetic", "value": {"boolValue": True}},
+                    {"key": "synthetic.demo_profile", "value": {"stringValue": PROFILE}},
+                ],
+            }
+        )
+    return {
+        "resourceSpans": [
+            {
+                "resource": {
+                    "attributes": [
+                        {"key": "service.name", "value": {"stringValue": RAW_SERVICE_NAME}},
+                        {"key": "synthetic", "value": {"boolValue": True}},
+                        {"key": "synthetic.demo_profile", "value": {"stringValue": PROFILE}},
+                    ]
+                },
+                "scopeSpans": [
+                    {
+                        "scope": {"name": "codex.synthetic_demo.stack", "version": "1"},
+                        "spans": spans,
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def validate_trace_payload(body: dict[str, Any]) -> None:
+    serialized = json.dumps(body, separators=(",", ":")).lower()
+    if "resourcespans" not in serialized or "resourcelogs" in serialized or "resourcemetrics" in serialized:
+        raise ValueError("Stack demo payload must contain OTLP traces only.")
+    if any(event in serialized for event in DERIVED_EVENTS):
+        raise ValueError("Stack demo traces must not contain derived diagnostic records.")
+    for key in UNSAFE_KEYS:
+        if f'"key":"{key}"' in serialized:
+            raise ValueError(f"Stack demo trace payload contains unsafe field: {key}")
+    if '"key":"synthetic","value":{"boolvalue":true}' not in serialized:
+        raise ValueError("Stack demo traces must be visibly synthetic at the source.")
+
+
 def shared(source_id: str, env_name: str, scenario: str, run_label: str) -> dict[str, Any]:
     return {
         "conversation_id": source_id,
@@ -289,10 +352,10 @@ def validate_demo_profile(profile: dict[str, dict[str, Any]]) -> None:
         raise ValueError("Demo payloads must be visibly synthetic at the raw source.")
 
 
-def post_json(url: str, body: dict[str, Any]) -> None:
+def post_json(url: str, body: dict[str, Any], endpoint: str = "/v1/logs") -> None:
     parsed = urllib.parse.urlparse(url)
-    if not parsed.path.endswith("/v1/logs"):
-        raise ValueError("Demo emission is restricted to an OTLP /v1/logs endpoint.")
+    if endpoint not in {"/v1/logs", "/v1/traces"} or not parsed.path.endswith(endpoint):
+        raise ValueError(f"Demo emission is restricted to an OTLP {endpoint} endpoint.")
     request = urllib.request.Request(
         url,
         data=json.dumps(body, separators=(",", ":")).encode("utf-8"),
@@ -414,9 +477,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--profile", default=PROFILE, choices=[PROFILE])
     parser.add_argument("--window", dest="window_minutes", type=parse_window, default=parse_window("30m"))
     parser.add_argument("--otlp-logs-url", default="http://localhost:4318/v1/logs")
+    parser.add_argument("--otlp-traces-url", default="http://localhost:4318/v1/traces")
     parser.add_argument("--grafana-url", default="http://localhost:3000")
     parser.add_argument("--wait-seconds", type=int, default=30)
     parser.add_argument("--report-json")
+    parser.add_argument("--traces-only", action="store_true", help="Emit only synthetic spans for Tempo/spanmetrics captures.")
     return parser.parse_args(argv)
 
 
@@ -427,8 +492,21 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     session = uuid.uuid4().hex[:8]
     profile = build_demo_profile(utc_now(), session)
+    stack_traces = trace_payload(utc_now())
     try:
         validate_demo_profile(profile)
+        validate_trace_payload(stack_traces)
+        post_json(args.otlp_traces_url, stack_traces, "/v1/traces")
+
+        if args.traces_only:
+            report = {
+                "profile": args.profile,
+                "proof_path": "synthetic OTLP traces -> Tempo -> generated spanmetrics -> Grafana",
+                "synthetic_trace_spans_emitted": len(stack_traces["resourceSpans"][0]["scopeSpans"][0]["spans"]),
+            }
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0
+
         for scenario in profile.values():
             post_json(args.otlp_logs_url, scenario["payload"])
 
@@ -436,6 +514,7 @@ def main(argv: list[str] | None = None) -> int:
             "profile": args.profile,
             "window_minutes": args.window_minutes,
             "proof_path": "synthetic OTLP -> Loki raw evidence -> shipped analyzers -> Loki derived records -> Grafana",
+            "synthetic_trace_spans_emitted": len(stack_traces["resourceSpans"][0]["scopeSpans"][0]["spans"]),
             "diagnostics": {},
         }
         specs = analyzer_specs(profile)

@@ -56,6 +56,33 @@ class DemoScenarioTests(unittest.TestCase):
         for key in demo.UNSAFE_KEYS:
             self.assertNotIn(f"'key': '{key}'", serialized)
 
+    def test_stack_trace_payload_is_synthetic_and_safe(self):
+        body = demo.trace_payload(dt.datetime(2026, 6, 20, 3, 0, tzinfo=dt.timezone.utc))
+        demo.validate_trace_payload(body)
+        spans = body["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        self.assertEqual(len(spans), 7)
+        resource_attributes = body["resourceSpans"][0]["resource"]["attributes"]
+        self.assertIn(
+            {"key": "service.name", "value": {"stringValue": demo.RAW_SERVICE_NAME}},
+            resource_attributes,
+        )
+        self.assertEqual(
+            {span["name"] for span in spans},
+            {
+                "turn/start",
+                "model_client.stream_responses_websocket",
+                "dispatch_tool_call_with_terminal_outcome",
+                "handle_tool_call",
+                "responses_websocket.stream_request",
+                "stream_request",
+                "shell_command",
+            },
+        )
+        serialized = str(body).lower()
+        self.assertNotIn("resourcemetrics", serialized)
+        for key in demo.UNSAFE_KEYS:
+            self.assertNotIn(f"'key': '{key}'", serialized)
+
 
 if __name__ == "__main__":
     unittest.main()

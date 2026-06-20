@@ -176,7 +176,26 @@
               <div class="flow-step"><span>1</span><strong>Notice the symptom</strong><small>Quiet, failed tool, unreliable API, slowness, or uncertainty.</small></div><div class="flow-step"><span>2</span><strong>Open a starting view</strong><small>Command Center or the known focused dashboard.</small></div><div class="flow-step"><span>3</span><strong>Inspect safe evidence</strong><small>State, grouping, bounded timing, and source window.</small></div><div class="flow-step"><span>4</span><strong>Narrow the issue class</strong><small>Run, tool, API, or slow contributor evidence.</small></div><div class="flow-step"><span>5</span><strong>Take the next action</strong><small>Check environment, availability, permissions, connectivity, or timing context.</small></div><div class="flow-step"><span>6</span><strong>Keep the boundary</strong><small>Evidence guides investigation; it does not automatically resolve or prove a bug.</small></div>
             </div>
 
-            <aside class="reproduce-note"><div><p class="mono-label">SEE IT LOCALLY</p><h3>Reproduce the same path with the repository proof triggers.</h3></div><p>Start the local stack, emit one focused synthetic source scenario through OTLP, run the matching analyzer with derived emission enabled, and open the dashboard in a tight recent window. The <a href="rebuild-guide.html">quickstart</a> explains the local commands; this walkthrough is not an installation flow.</p></aside>
+            <div class="section-head wide-head"><div><p class="eyebrow">Stack signal sneak peek</p><h3>See the local evidence foundation behind the focused dashboards.</h3></div><p class="section-intro">These real Grafana captures use synthetic example data. They show raw event volume in Loki and synthetic trace-derived views in Tempo and Prometheus; they are supporting stack views, not additional diagnostic classifiers.</p></div>
+            <div class="grid-3">
+              <figure class="dashboard-shot">
+                <span class="synthetic-label">Synthetic example data</span>
+                <img src="assets/dashboard-walkthrough/loki-events.png" alt="Codex Loki events-by-name panel with synthetic example data" loading="lazy">
+                <figcaption><strong>Loki:</strong> schema-confirmed synthetic event names arriving through OTLP. The public capture deliberately uses the safe aggregate panel rather than raw log rows.</figcaption>
+              </figure>
+              <figure class="dashboard-shot">
+                <span class="synthetic-label">Synthetic example data</span>
+                <img src="assets/dashboard-walkthrough/tempo-traces.png" alt="Codex Tempo trace dashboard with synthetic example data showing span rate latency kind and status" loading="lazy">
+                <figcaption><strong>Tempo:</strong> span rate, latency, kind, and unset-status evidence from schema-confirmed names carried by synthetic spans. Trace identifiers remain outside the public image.</figcaption>
+              </figure>
+              <figure class="dashboard-shot">
+                <span class="synthetic-label">Synthetic example data</span>
+                <img src="assets/dashboard-walkthrough/prometheus-spanmetrics.png" alt="Codex Prometheus spanmetrics panel with synthetic example data showing generated span throughput" loading="lazy">
+                <figcaption><strong>Prometheus:</strong> generated spanmetrics for schema-confirmed names carried by synthetic spans. These are collector-derived signals, not native <code>codex_*</code> metrics.</figcaption>
+              </figure>
+            </div>
+
+            <aside class="reproduce-note"><div><p class="mono-label">SEE IT LOCALLY</p><h3>Reproduce the same path with the repository proof triggers.</h3></div><p>Start the local stack and emit synthetic source evidence through OTLP. Focused diagnostics then run the matching analyzer with derived emission enabled; the stack previews use raw logs or standard synthetic spans. Open the relevant dashboard in a tight recent window. The <a href="rebuild-guide.html">quickstart</a> explains the local commands; this walkthrough is not an installation flow.</p></aside>
           </section>
 
           <section class="section" id="signal-path" data-search>
