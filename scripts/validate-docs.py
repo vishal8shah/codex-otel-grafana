@@ -153,6 +153,11 @@ def main() -> int:
             if forbidden_default in onboarding_text:
                 errors.append(f"onboarding.html: Phase 6 notification command entered the default onboarding path: {forbidden_default}")
 
+    for source in pages:
+        page_text = source.read_text(encoding="utf-8").lower()
+        if 'href="onboarding.html"' not in page_text or ">03</span>onboarding" not in page_text:
+            errors.append(f"{source.name}: primary Onboarding navigation link is missing")
+
     readme_path = REPO_ROOT / "README.md"
     readme_text = readme_path.read_text(encoding="utf-8").lower()
     if "docs/onboarding.html" not in readme_text:
