@@ -30,10 +30,17 @@
    Adds one privacy-safe navigation front door over existing derived diagnostic
    streams for users who already have the local kit running. It adds no new
    classifier, alert family, onboarding flow, or production-monitoring claim.
+10. **Phase 8: Incident-Inspired Agent Behaviour Security — shipped / bounded**
+   Adds an opt-in observe-first hook adapter, versioned deterministic policy,
+   privacy-safe `codex.behavior_observation` and `codex.behavior_finding`
+   streams, a correlation analyzer, focused dashboard, local high-risk alert,
+   and an incident-safe synthetic demo. Enforcement is explicit and limited to
+   supported pre-tool hooks. It does not infer private reasoning or intent,
+   cover all hosted tools, or provide production SOC/SIEM monitoring.
 
 ## Next One-Pain Cycle
 
-**Review/resume flow diagnosis** is next in the existing backlog. It remains
+**Review/resume flow diagnosis** remains in the existing backlog. It is
 unbuilt until its source fields, privacy boundary, and end-to-end evidence path
 are confirmed.
 

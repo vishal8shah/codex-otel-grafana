@@ -183,6 +183,37 @@ event type, hashes of identifiers/path, and an explicitly opted-in project
 basename. Raw input messages, assistant messages, prompts, cwd, and thread ID
 are never emitted.
 
+### Codex lifecycle and tool hooks used by Phase 8
+
+Current official Codex documentation describes `SessionStart`, `SessionEnd`,
+`PreToolUse`, `PostToolUse`, `PermissionRequest`, `SubagentStart`,
+`SubagentStop`, `PreCompact`, `PostCompact`, `Stop`, and `Interrupt`. The local
+CLI reports the `hooks` feature as stable, but a complete privacy-reviewed live
+hook run has not yet been recorded in this ledger. These source payloads are
+therefore **Documented by official Codex docs / Synthetic contract tested / Live
+proof pending**.
+
+The 2026-09-17 live-proof attempt on Codex CLI `0.139.0` remained incomplete:
+an existing incompatible global feature entry prevented persisted hook trust,
+the configured default model required a newer CLI, and the observed
+`SessionStart` hook invocation exited before emitting safe evidence. The
+repository hooks and key were removed after the attempt; no global config was
+changed. Re-run the harmless proof after upgrading Codex and resolving the
+pre-existing config compatibility issue.
+
+The Phase 8 adapter receives source identifiers, cwd, tool input, and tool
+response transiently. None is dashboard-eligible. It emits only the following
+helper-derived contract:
+
+| Signal | Source | Status | Safe fields | Notes |
+|---|---|---|---|---|
+| `codex.behavior_observation` | Repository-local Codex hook helper | Requires helper script; synthetic contract tested | HMAC `run_hash`/`turn_hash`, hook event, normalized tool class, rule/signal enums, severity, mode/action, permission mode, provenance, bounded counts/time | Raw hook payload, prompt, cwd, transcript, arguments, output, paths, domains, credentials, and tool-call IDs are dropped before OTLP. |
+| `codex.behavior_finding` | Phase 8 windowed analyzer | Derived signal; synthetic contract tested | HMAC run group, finding/category/severity/state, rule IDs, count/time window, fixed explanation/action, provenance | Deterministic investigation evidence only; not semantic intent or proof of malicious behaviour. |
+
+Hook coverage excludes hosted tools and any specialized path that opts out of
+the local function-tool hook path. `PostToolUse` evidence cannot undo a side
+effect. A missing heartbeat or alert is not evidence of health.
+
 ## 8. Confirmed vs Unconfirmed Richer Signals
 
 | Signal | Source | Status | Example field/value | Safe for dashboard? | Notes |
@@ -194,6 +225,8 @@ are never emitted.
 | Estimated token cost | Completion logs + price table | Derived signal | `tokens * configured rate` | Yes, marked estimate | Pricing is external, time-sensitive input. |
 | Turn completion | Notify helper | Requires helper script | `event_type=agent-turn-complete` | Yes | Native OTel must not be implied. |
 | Privacy-safe project group | Notify helper | Requires helper script | `cwd_hash=<sha256/hmac>` | Yes | Basename is opt-in and may leak a client/project name. |
+| Supported local lifecycle/tool policy observation | Phase 8 hook helper | Requires helper script; live proof pending | `behavior_signal=<safe-enum>` | Yes, helper-derived | Raw hook data is never emitted. |
+| Correlated behaviour finding | Phase 8 analyzer | Derived signal | `category=<safe-enum>` | Yes, derived | No semantic intent, maliciousness score, or complete enforcement claim. |
 
 ## 9. Dashboard Field Eligibility Rules
 
@@ -208,6 +241,8 @@ are never emitted.
 6. Collector self-metrics and spanmetrics must be labeled as pipeline/derived
    signals, not native Codex metrics.
 7. High-cardinality labels require an explicit aggregation and retention review.
+8. Phase 8 hook observations must use the allowlisted helper schema; raw hook
+   input and response fields are never dashboard-eligible.
 
 Future issue-led scenarios must use verified issue references and support labels
 `Direct`, `Partial`, `Adjacent`, or `Not observable`. They may say the kit helps
@@ -236,6 +271,9 @@ Approved seeds for that future verification work are `openai/codex#5085`,
 - [ ] Purge or reset retained LGTM data that predates current redaction before screenshots, public demos, or sharing local Grafana state.
 - [ ] Record unknowns as **Not tested**, not **Not observed**.
 - [ ] Review and accept this ledger before building advanced dashboards.
+- [ ] For Phase 8 live proof, install repository-local hooks explicitly, accept
+      hook trust, perform one harmless interactive tool call, verify only safe
+      schema keys/counts, and remove the local hooks afterwards if not wanted.
 
 ## 11. What Must Not Be Inferred
 
@@ -251,3 +289,7 @@ Approved seeds for that future verification work are `openai/codex#5085`,
 - Do not infer that hashing makes low-entropy private values anonymous.
 - Do not treat the trace inventory as exhaustive; one oversized trace in the
   bounded window could not be fetched or attributed.
+- Do not infer reward hacking, deception, concealment, goal drift, or malicious
+  intent from Phase 8 deterministic patterns.
+- Do not treat hook coverage as packet, OS audit, hosted-tool, or complete
+  sandbox enforcement coverage.

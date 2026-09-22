@@ -200,9 +200,30 @@ privacy, and whether the image could overstate the dashboard capability.
 - Misleading real-user or real-system data: absent
 - Visual overclaim review: passed; generated spanmetrics are labelled as collector-derived rather than native Codex metrics
 
+## `docs/assets/dashboard-walkthrough/agent-behavior-security.png`
+
+- Dashboard captured: Codex Agent Behaviour Security
+- Synthetic demo profile used: `incident-safe`
+- Proof path used: synthetic hook replay → privacy-safe observations → deterministic findings → OTLP → Loki → Grafana
+- Capture/review date: 2026-09-17
+- Reviewer/check status: reviewed
+- Manual pixel/content review: completed at original 1280×720 resolution
+- Panel content: synthetic high/critical and blocked group totals, observed policy actions, heartbeat, category/severity, and tool-class activity
+- Visible nearby label: `Synthetic example data` is present in the containing figure
+- Alt text: contains `synthetic example data`
+- Browser/OS chrome and tooltips: absent
+- Prompts or prompt fragments: absent
+- Real names, emails, usernames, accounts, tenants, hostnames, or organisations: absent
+- Raw conversation, session, turn, tool-call, agent, or request IDs: absent
+- Raw local paths, domains, commands, arguments, responses, or transcripts: absent
+- Keys, secrets, tokens, credentials, auth headers, or account IDs: absent
+- Real model, provider, or account details: absent
+- Misleading real-user or real-system data: absent
+- Visual overclaim review: passed; deterministic findings are presented as synthetic investigation evidence, not proof of intent or complete containment
+
 ## Scope conclusion
 
-All eight screenshots passed original-resolution privacy and overclaim review.
+All nine screenshots passed original-resolution privacy and overclaim review.
 They are direct captures of shipped dashboards populated by local synthetic demo
 data. No image contains unsafe values, browser/OS chrome, fabricated panels, or
 invented metrics. The screenshots remain examples of privacy-safe investigation

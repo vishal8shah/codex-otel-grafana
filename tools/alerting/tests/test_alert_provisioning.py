@@ -7,6 +7,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 PROVISIONING = ROOT / "observability" / "provisioning" / "alerting" / "stuck-notification.yaml"
+BEHAVIOR_PROVISIONING = ROOT / "observability" / "provisioning" / "alerting" / "behavior-notification.yaml"
 
 
 class AlertProvisioningTests(unittest.TestCase):
@@ -41,6 +42,30 @@ class AlertProvisioningTests(unittest.TestCase):
         ):
             self.assertNotIn(unsafe, serialized)
         self.assertNotIn("resourcemetrics", serialized)
+
+
+class BehaviorAlertProvisioningTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.payload = json.loads(BEHAVIOR_PROVISIONING.read_text(encoding="utf-8"))
+        cls.rule = cls.payload["groups"][0]["rules"][0]
+
+    def test_uses_only_privacy_safe_high_risk_findings(self) -> None:
+        query = self.rule["data"][0]["model"]["expr"]
+        self.assertIn('service_name="Codex Agent Behavior Diagnosis"', query)
+        self.assertIn('event_name="codex.behavior_finding"', query)
+        self.assertIn('severity=~"high|critical"', query)
+        self.assertIn("sum by (run_hash, finding_id, category, severity, state)", query)
+
+    def test_routes_to_local_receiver_and_deduplicates(self) -> None:
+        settings = self.rule["notification_settings"]
+        self.assertEqual(settings["receiver"], "Codex local dev webhook")
+        self.assertIn("finding_id", settings["group_by"])
+        self.assertEqual(settings["repeat_interval"], "4h")
+
+    def test_alert_states_do_not_claim_silence_is_health(self) -> None:
+        self.assertEqual(self.rule["noDataState"], "OK")
+        self.assertIn("not proof", self.rule["annotations"]["summary"])
 
 
 if __name__ == "__main__":

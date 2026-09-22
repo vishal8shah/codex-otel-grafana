@@ -19,6 +19,7 @@ DETAIL_DASHBOARDS = {
     "Codex Tool Failure Diagnosis": "codex-tool-failure-diagnosis.json",
     "Codex API Request Reliability": "codex-api-request-reliability.json",
     "Codex Slow Contributor Triage": "codex-slow-contributor-triage.json",
+    "Codex Agent Behaviour Security": "codex-agent-behavior-security.json",
 }
 
 STREAMS = {
@@ -49,6 +50,14 @@ STREAMS = {
         "event": "DERIVED_EVENT_NAME",
         "states": ("SLOW_API_CONTRIBUTOR", "SLOW_TOOL_CONTRIBUTOR", "MULTIPLE_SLOW_CONTRIBUTORS"),
         "grouping": ("run_hash", "contributor_type", "endpoint_hash", "tool_name"),
+    },
+    "Agent behaviour security findings": {
+        "module": "tools/agent-behavior/behavior_common.py",
+        "service": "FINDING_SERVICE",
+        "event": "FINDING_EVENT",
+        "filter_field": "severity",
+        "filter_values": ("high", "critical"),
+        "grouping": ("run_hash", "finding_id"),
     },
 }
 
@@ -151,18 +160,23 @@ def main() -> int:
         constants = string_constants(ROOT / str(contract["module"]))
         service = constants[str(contract["service"])]
         event = constants[str(contract["event"])]
-        states = [constants[name] for name in contract["states"]]
+        if "states" in contract:
+            filter_field = "state"
+            filter_values = [constants[name] for name in contract["states"]]
+        else:
+            filter_field = str(contract["filter_field"])
+            filter_values = list(contract["filter_values"])
         if f'service_name="{service}"' not in expression or f'event_name="{event}"' not in expression:
             raise AssertionError(f"{panel_title} does not reference its shipped derived stream")
         if "[${lookback}]" not in expression:
             raise AssertionError(f"{panel_title} does not use the shared lookback variable")
         if f"sum by ({', '.join(contract['grouping'])})" not in expression:
             raise AssertionError(f"{panel_title} grouping does not match the shipped diagnostic grain")
-        state_match = re.search(r'state=~"([A-Z_|]+)"', expression)
+        state_match = re.search(rf'{re.escape(filter_field)}=~"([A-Za-z_|]+)"', expression)
         referenced_states = set(state_match.group(1).split("|")) if state_match else set()
-        if referenced_states != set(states):
+        if referenced_states != set(filter_values):
             raise AssertionError(
-                f"{panel_title} state query drifted: expected {sorted(states)}, got {sorted(referenced_states)}"
+                f"{panel_title} filter query drifted: expected {sorted(filter_values)}, got {sorted(referenced_states)}"
             )
         lowered = expression.lower()
         for unsafe in UNSAFE_QUERY_FIELDS:

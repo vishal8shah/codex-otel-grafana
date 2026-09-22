@@ -26,6 +26,7 @@ jobs:
           python -m unittest discover -s tools/api-reliability/tests
           python -m unittest discover -s tools/slow-contributor/tests
           python -m unittest discover -s tools/alerting/tests
+          python -m unittest discover -s tools/agent-behavior/tests
 
       - name: Compile Python files
         run: python -m compileall -q tools scripts
@@ -47,6 +48,9 @@ jobs:
 
       - name: Validate Diagnostic Command Center contracts
         run: python scripts/validate-command-center.py
+
+      - name: Validate agent behaviour privacy and provisioning contracts
+        run: python scripts/validate-agent-behavior.py
 
       - name: Validate alert provisioning
         run: |

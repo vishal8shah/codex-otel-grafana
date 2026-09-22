@@ -47,18 +47,18 @@
 
               <div class="arch-reduction" id="reduction">
                 <div class="reduction-rail" aria-hidden="true"><span>Loki read</span><i></i><span>Loki write</span></div>
-                <div class="reduction-core"><p class="zone-kicker">PRIVACY REDUCTION GATE</p><h3>Focused analyzers</h3><p>Read raw Loki records, hash safe grouping identifiers, drop unsafe fields, apply documented precedence, and emit bounded derived snapshots.</p><div class="reduction-tags"><code>run-health</code><code>tool-failure</code><code>api-reliability</code><code>slow-contributor</code></div></div>
+                <div class="reduction-core"><p class="zone-kicker">PRIVACY REDUCTION GATE</p><h3>Focused analyzers</h3><p>Read raw Loki records, hash safe grouping identifiers, drop unsafe fields, apply documented precedence, and emit bounded derived snapshots.</p><div class="reduction-tags"><code>run-health</code><code>tool-failure</code><code>api-reliability</code><code>slow-contributor</code><code>agent-behavior</code></div></div>
                 <div class="reduction-boundary"><strong>No unsafe fields should cross.</strong><span>Prompts, identities, raw conversation IDs, paths, endpoints, call IDs, tool arguments, and tool output are excluded.</span></div>
               </div>
 
               <div class="arch-zone derived-zone" id="derived">
                 <div class="arch-zone-head"><div><span class="zone-kicker">DERIVED PRIVACY-SAFE SIDE</span><h3>Evidence for investigation</h3></div><span class="status-badge shipped">Shipped</span></div>
                 <div class="arch-path">
-                  <div class="arch-node store-node"><span class="node-index">04</span><strong>Loki derived records</strong><small><code>codex.run_health</code> &middot; <code>codex.tool_diagnostic</code> &middot; <code>codex.api_diagnostic</code> &middot; <code>codex.slow_contributor</code></small></div>
+                  <div class="arch-node store-node"><span class="node-index">04</span><strong>Loki derived records</strong><small><code>codex.run_health</code> &middot; <code>codex.tool_diagnostic</code> &middot; <code>codex.api_diagnostic</code> &middot; <code>codex.slow_contributor</code> &middot; <code>codex.behavior_finding</code></small></div>
                   <span class="arch-connector" aria-hidden="true">&#8594;</span>
-                  <div class="arch-node"><span class="node-index">05</span><strong>Grafana views</strong><small>Command Center plus stuck, tool, API, and slow-contributor dashboards</small></div>
+                  <div class="arch-node"><span class="node-index">05</span><strong>Grafana views</strong><small>Command Center plus stuck, tool, API, slow-contributor, and agent-behaviour dashboards</small></div>
                   <span class="arch-connector optional" aria-hidden="true">&#8640;</span>
-                  <div class="arch-node optional-node"><span class="node-index">OPTIONAL</span><strong>Local notification</strong><small>Grafana alerting routes recent stuck-candidate evidence to a development webhook</small></div>
+                  <div class="arch-node optional-node"><span class="node-index">OPTIONAL</span><strong>Local notification</strong><small>Grafana alerting routes recent stuck-candidate or high-risk behaviour evidence to a development webhook</small></div>
                 </div>
                 <p class="zone-note">Derived snapshots are investigation evidence. Repeated emissions are deduplicated in stat queries by the diagnostic’s privacy-safe grouping key.</p>
               </div>
@@ -72,12 +72,12 @@
 
           <section class="section" id="grouping" data-search>
             <div class="section-head wide-head"><div><p class="eyebrow">Grouping semantics</p><h2>Useful aggregation without unsafe identifiers.</h2></div><p class="section-intro">The absence of a confirmed safe request or call ID keeps several views deliberately aggregate-level.</p></div>
-            <div class="grouping-grid"><article><code>run_hash</code><strong>Run health</strong><span>Unique privacy-safe run grouping.</span></article><article><code>run_hash + tool_name</code><strong>Tool diagnosis</strong><span>Tool/run evidence, not individual-call proof.</span></article><article><code>run_hash + endpoint_hash</code><strong>API diagnosis</strong><span>Run/endpoint evidence, not individual-request proof.</span></article><article><code>confirmed contributor grouping</code><strong>Slow contributor</strong><span>Contributor evidence, not full-turn latency.</span></article></div>
+            <div class="grouping-grid"><article><code>run_hash</code><strong>Run health</strong><span>Unique privacy-safe run grouping.</span></article><article><code>run_hash + tool_name</code><strong>Tool diagnosis</strong><span>Tool/run evidence, not individual-call proof.</span></article><article><code>run_hash + endpoint_hash</code><strong>API diagnosis</strong><span>Run/endpoint evidence, not individual-request proof.</span></article><article><code>confirmed contributor grouping</code><strong>Slow contributor</strong><span>Contributor evidence, not full-turn latency.</span></article><article><code>run_hash + finding_id</code><strong>Behaviour finding</strong><span>Deterministic sequence evidence, not proof of malicious intent.</span></article></div>
           </section>
 
           <section class="section" id="notification" data-search>
             <div class="section-head wide-head"><div><p class="eyebrow">Optional Phase 6 path</p><h2>Push evidence locally—without calling it production alerting.</h2></div><span class="status-badge partial">Opt-in</span></div>
-            <div class="notification-chain"><span>Fresh <code>codex.run_health</code></span><i aria-hidden="true">&#8594;</i><span>Grafana rule</span><i aria-hidden="true">&#8594;</i><span>Notification policy</span><i aria-hidden="true">&#8594;</i><span>Local webhook</span></div>
+            <div class="notification-chain"><span>Fresh run-health or high-risk behaviour finding</span><i aria-hidden="true">&#8594;</i><span>Grafana rule</span><i aria-hidden="true">&#8594;</i><span>Notification policy</span><i aria-hidden="true">&#8594;</i><span>Local webhook</span></div>
             <p class="callout">Every link must work: running stack, incoming telemetry, emitting watcher/analyzer, provisioned rule, configured routing, and reachable destination. The development proof is fail-open for no-data and execution errors. Silence does not prove health.</p>
           </section>
 

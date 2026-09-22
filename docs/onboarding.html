@@ -47,7 +47,7 @@ cd codex-otel-grafana</pre></li>
           <li><strong>Start the repository-owned stack.</strong><pre>.\scripts\start.ps1</pre></li>
           <li><strong>Check Grafana, Loki, Tempo, Prometheus, and OTLP readiness.</strong><pre>python scripts/health-check.py</pre></li>
           <li><strong>Emit and verify the existing walkthrough-rich profile.</strong><pre>python scripts/run-onboarding-demo.py --report-json "$env:TEMP\codex-onboarding-proof.json"</pre></li>
-          <li><strong>Open the printed Command Center URL.</strong> Use the printed 30-minute window, then follow its links to the four focused dashboards.</li>
+          <li><strong>Open the printed Command Center URL.</strong> Use the printed 30-minute window, then follow its links to the five focused dashboards.</li>
         </ol>
         <p>The proof wrapper does not duplicate classifier logic or inject derived rows. It invokes <code>scripts/emit-demo-scenarios.py --profile walkthrough-rich</code>; that emitter runs the shipped analyzers, and the wrapper polls Loki for the exact privacy-safe group keys returned by the current profile.</p>
 
@@ -56,7 +56,7 @@ cd codex-otel-grafana</pre></li>
         <ul><li><code>run_hash</code> for run health</li><li><code>run_hash + tool_name</code> for tool evidence</li><li><code>run_hash + endpoint_hash</code> for API evidence</li><li>the shipped run/contributor/endpoint/tool grain for slow contributors</li></ul>
         <p>Repeated analyzer snapshots cannot increase these set-based counts. Command Center issue counts are derived from the current dashboard state filters rather than copied literal totals.</p>
         <p>Open these printed views:</p>
-        <ul><li>Codex Diagnostic Command Center</li><li>Codex Stuck Triage</li><li>Codex Tool Failure Diagnosis</li><li>Codex API Request Reliability</li><li>Codex Slow Contributor Triage</li></ul>
+        <ul><li>Codex Diagnostic Command Center</li><li>Codex Stuck Triage</li><li>Codex Tool Failure Diagnosis</li><li>Codex API Request Reliability</li><li>Codex Slow Contributor Triage</li><li>Codex Agent Behaviour Security (optional Phase 8 hook/demo evidence)</li></ul>
         <p>Use the <a href="index.html#walkthrough">synthetic dashboard walkthrough</a> to understand each panel. Local values need not look pixel-identical to the public captures; the proof report and unique groups are authoritative.</p>
 
         <h2 id="stop">Stop and reset safely</h2>
