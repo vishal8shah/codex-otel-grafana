@@ -108,12 +108,18 @@ control bypass, outbound credential use, public mutation, persistence creation,
 and explicit workspace-boundary access. Medium-risk rules only observe.
 Post-tool findings cannot undo completed side effects.
 
+For current local Bash hooks, `PostToolUse.tool_response` may be model-facing
+text without a reliable exit-status field. Such results remain `observed`; the
+monitor emits `completed` or `failed` only when a supported structured response
+contains an explicit success indicator. Do not infer success from text output.
+
 ## Evidence streams
 
 | Stream | Producer | Meaning |
 |---|---|---|
 | `codex.behavior_observation` | Hook adapter | One privacy-safe lifecycle, tool, approval, subagent, or policy observation |
 | `codex.behavior_finding` | Windowed analyzer | One deterministic single-signal or correlated run-window finding |
+| `codex.behavior_analyzer_heartbeat` | Windowed analyzer | One bounded liveness record for each completed analyzer run, including runs with no findings |
 
 `policy.json` is versioned and defaults to `observe`. In enforcement mode,
 policy evaluation failure blocks the pending supported hook action. In observe
@@ -124,7 +130,7 @@ mode, failure is visible but does not change the tool decision.
 - `behavior-monitor` normalizes one hook event from stdin.
 - `behavior-analyze` queries Loki or a privacy-safe fixture and emits findings.
 - `behavior-demo --profile incident-safe` runs the side-effect-free demo.
-- `behavior-doctor` checks policy, hooks, stack reachability, and provisioning.
+- `behavior-doctor` checks policy, hooks, stack reachability, provisioning, and a recent analyzer heartbeat in Loki.
 - `behavior-hooks install|check|remove` manages repository-local hook state.
 
 PowerShell and shell wrappers for each command live under `scripts/`.

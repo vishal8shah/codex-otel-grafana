@@ -189,7 +189,7 @@
         <article class="card"><div class="panel-title">High / critical finding groups</div><div class="metric bad">59</div><div class="panel-rule">Unique run + finding groups backed by deterministic high/critical evidence.</div><div class="read">Read as: triage queue size.</div></article>
         <article class="card"><div class="panel-title">Blocked finding groups</div><div class="metric good">59</div><div class="panel-rule">Findings whose supported pre-tool action was denied by the enforcement profile.</div><div class="read">Read as: prevention evidence, not rollback.</div></article>
         <article class="card"><div class="panel-title">Observed policy actions</div><div class="metric">90</div><div class="panel-rule">All observed, allowed, denied, completed or failed hook observations in the lookback.</div><div class="read">Read as: monitored activity volume.</div></article>
-        <article class="card"><div class="panel-title">Monitor heartbeat · 5m</div><div class="metric good">1</div><div class="panel-rule">Recent SessionStart heartbeat seen by the monitor.</div><div class="read">Read as: telemetry freshness only.</div></article>
+        <article class="card"><div class="panel-title">Monitor heartbeat · 5m</div><div class="metric good">1</div><div class="panel-rule">Recent adapter SessionStart and analyzer-run evidence.</div><div class="read">Read as: component freshness only, never agent health.</div></article>
       </div>
       <div class="card" style="margin-top:1.7%; padding:1.7% 2.2%; border-left:4px solid var(--yellow)"><p style="margin:0"><strong class="warn">Important:</strong> a zero heartbeat or silent alert does not prove health. It means recent monitor evidence is missing.</p></div>
     </section>

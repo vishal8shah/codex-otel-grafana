@@ -70,7 +70,7 @@ metrics_exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/metrics"
 ./scripts/behavior-hooks.sh check
 ./scripts/behavior-demo.sh --profile incident-safe
 ./scripts/behavior-doctor.sh</pre></article></div>
-        <p>Hook installation is explicit, repository-local, and observe-only by default. The incident-safe demo emits labelled synthetic evidence; it never executes its dangerous-looking fixture content. Open <strong>Grafana &gt; Codex Agent Behaviour Security</strong>, and treat findings as investigation evidence rather than proof of intent or complete containment.</p>
+        <p>Hook installation is explicit, repository-local, and observe-only by default. The incident-safe demo emits labelled synthetic evidence; it never executes its dangerous-looking fixture content. The doctor now requires a recent analyzer heartbeat in Loki, so run the demo or analyzer before the doctor. Open <strong>Grafana &gt; Codex Agent Behaviour Security</strong>, and treat findings as investigation evidence rather than proof of intent or complete containment.</p>
         <p>Use the <a href="agent-behavior-demo-deck.html">self-contained Phase 8 demo deck</a> to explain the architecture, interpret every dashboard panel, preserve the evidence-source boundary, and hand over to the live dashboard.</p>
         <p class="callout">To remove the adapter, run <code>.\scripts\behavior-hooks.ps1 remove</code> or <code>./scripts/behavior-hooks.sh remove</code>. Enforcement is a separate, explicit profile and covers only supported local hook paths.</p>
 

@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
+import ntpath
 import os
+import posixpath
 import re
 import sys
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +42,7 @@ UNSAFE_ATTRIBUTE_NAMES = {
     "credential", "secret", "token", "authorization",
 }
 PERMISSION_MODES = {
-    "accept_edits", "bypass_permissions", "default", "full_access", "never", "plan",
+    "accept_edits", "bypass_permissions", "default", "dont_ask", "full_access", "never", "plan",
     "read_only", "workspace_write",
 }
 
@@ -55,14 +59,64 @@ def first_match(text: str, patterns: list[str]) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
 
 
+def local_network_write(text: str, safe_hosts: list[str]) -> bool:
+    """Return true only when every explicit HTTP(S) destination is loopback."""
+    urls = re.findall(r"https?://[^\s\"'<>]+", text, re.IGNORECASE)
+    if not urls:
+        return False
+    allowed = {host.casefold() for host in safe_hosts}
+    for url in urls:
+        host = urllib.parse.urlparse(url.rstrip(".,);]")).hostname
+        if not host:
+            return False
+        normalized = host.casefold()
+        if normalized in allowed:
+            continue
+        try:
+            if ipaddress.ip_address(normalized).is_loopback:
+                continue
+        except ValueError:
+            pass
+        return False
+    return True
+
+
+def path_candidates(text: str) -> list[str]:
+    without_urls = re.sub(r"https?://[^\s\"'<>]+", "", text, flags=re.IGNORECASE)
+    windows = re.findall(r"(?<![\w])([A-Za-z]:[\\/][^\s\"'|;&<>]+)", without_urls)
+    posix = re.findall(r"(?<![:\w/])(/[^\s\"'|;&<>]+)", without_urls)
+    traversal = re.findall(r"(?:^|[\s\"'=])((?:\.\.[\\/])+[^\s\"'|;&<>]+)", without_urls)
+    return [value.rstrip(".,);]") for value in windows + posix + traversal]
+
+
+def outside_workspace(path: str, cwd: str) -> bool:
+    try:
+        if re.match(r"^[A-Za-z]:[\\/]", cwd):
+            if path.startswith("/"):
+                return True
+            candidate = ntpath.normcase(ntpath.abspath(path if re.match(r"^[A-Za-z]:[\\/]", path) else ntpath.join(cwd, path)))
+            root = ntpath.normcase(ntpath.abspath(cwd))
+            return ntpath.commonpath([candidate, root]) != root
+        if cwd.startswith("/"):
+            if re.match(r"^[A-Za-z]:[\\/]", path):
+                return True
+            candidate = posixpath.abspath(path if path.startswith("/") else posixpath.join(cwd, path))
+            root = posixpath.abspath(cwd)
+            return posixpath.commonpath([candidate, root]) != root
+        if path.startswith("/") or re.match(r"^[A-Za-z]:[\\/]", path) or path.startswith(".."):
+            return True
+    except ValueError:
+        return True
+    return False
+
+
 def classify_signal(event: dict[str, Any], policy: dict[str, Any]) -> str:
     hook_event = str(event.get("hook_event_name", ""))
     name = str(event.get("tool_name", ""))
     raw = flatten_text(event.get("tool_input"))
     lowered = raw.lower()
-    network_write = first_match(lowered, policy["network_write_patterns"]) and not first_match(
-        lowered, policy["safe_exceptions"]
-    )
+    network_write_match = first_match(lowered, policy["network_write_patterns"])
+    network_write = network_write_match and not local_network_write(lowered, policy["safe_exceptions"])
 
     if hook_event in {"SubagentStart", "SubagentStop"} or name.lower() in {"agent", "spawn_agent"}:
         return "subagent_activity"
@@ -86,7 +140,8 @@ def classify_signal(event: dict[str, Any], policy: dict[str, Any]) -> str:
         if re.search(r"(?:git\s+push|release\s+create|pr\s+create|publish|hf\s+upload)", lowered):
             return "public_mutation"
         return "external_write"
-    if re.search(r"(?:/etc/|/root/|/proc/|/sys/|\\windows\\system32|\\users\\[^\\]+\\\.codex)", lowered):
+    cwd = str(event.get("cwd", ""))
+    if any(outside_workspace(path, cwd) for path in path_candidates(raw)):
         return "workspace_boundary_attempt"
     if re.search(r"(?:\benv\b|printenv|set\s*$|mountinfo|/proc/(?:self|1)|ifconfig|ipconfig|netstat|route\s+print|whoami|id\s*$)", lowered):
         return "environment_reconnaissance"
@@ -101,7 +156,9 @@ def result_action(event: dict[str, Any], signal: str, mode: str, rule: dict[str,
         response = event.get("tool_response")
         if isinstance(response, dict) and (response.get("isError") is True or response.get("success") is False):
             return "failed"
-        return "completed"
+        if isinstance(response, dict) and response.get("success") is True:
+            return "completed"
+        return "observed"
     if hook_event == "PreToolUse" and mode == "enforce" and rule.get("enforce") is True and rule.get("severity") in {"high", "critical"}:
         return "denied"
     if hook_event == "PreToolUse":

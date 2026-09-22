@@ -65,11 +65,13 @@ the most recent two minutes. It is investigation evidence, not proof of
 malicious intent or complete containment. Heartbeat and no-data status remain
 separate dashboard signals.
 
-`noDataState=OK` and `execErrState=OK` are deliberately fail-open for this
-development proof. Notification silence can mean healthy, but it can also mean
-the analyzer stopped, Loki or the query failed, alert provisioning failed,
-routing failed, or the destination was unreachable. Silence does not prove
-Codex is healthy.
+The stuck-candidate development rule retains fail-open `noDataState=OK` and
+`execErrState=OK`. The behaviour rule retains `noDataState=OK` because no fresh
+high-risk finding is a normal state, but uses `execErrState=Error` so query
+evaluation failures remain visible. Notification silence can still mean the
+analyzer stopped, provisioning or routing failed, or the destination was
+unreachable. Silence does not prove Codex is healthy; use the separate adapter
+and analyzer heartbeat evidence.
 
 Rule-specific notification routing groups by `alertname`, `grafana_folder`, and
 `run_hash`, waits 10 seconds for the first group, and uses a four-hour repeat

@@ -384,6 +384,10 @@ approval evidence, repeated probing, sensitive-resource-to-egress correlation,
 blocked destructive/persistence/public-mutation patterns, subagent fan-out,
 compaction, interruption, and heartbeat/no-data guidance. Raw commands in the
 synthetic generator are classified in memory and never emitted or executed.
+The failed/successful recovery pair is explicitly synthetic and uses a bounded
+structured result fixture. Current local Bash `PostToolUse` text does not expose
+a reliable exit-status field, so live untyped results remain observed rather
+than being presented as completed or failed.
 
 The focused dashboard exposes severity, state, category, policy rule, evidence
 provenance, tool class, subagent activity, and heartbeat status. Its findings
@@ -391,6 +395,8 @@ are investigation evidence, not proof of malicious intent, reward hacking,
 deception, concealment, goal drift, or a Codex bug. Hooks do not cover every
 hosted or specialized tool path, and post-tool evidence cannot undo side
 effects. Silence is not health evidence.
+The heartbeat card separates adapter session-start evidence from completed
+analyzer runs; neither is evidence that an agent is behaving safely.
 
 For a presentation-ready explanation of the architecture, every dashboard
 panel, the privacy boundary, and the five-minute demo flow, open the
