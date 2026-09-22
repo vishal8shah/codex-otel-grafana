@@ -65,6 +65,7 @@ class BehaviorAlertProvisioningTests(unittest.TestCase):
 
     def test_alert_states_do_not_claim_silence_is_health(self) -> None:
         self.assertEqual(self.rule["noDataState"], "OK")
+        self.assertEqual(self.rule["execErrState"], "Error")
         self.assertIn("not proof", self.rule["annotations"]["summary"])
 
 

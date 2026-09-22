@@ -209,6 +209,7 @@ helper-derived contract:
 |---|---|---|---|---|
 | `codex.behavior_observation` | Repository-local Codex hook helper | Requires helper script; synthetic contract tested | HMAC `run_hash`/`turn_hash`, hook event, normalized tool class, rule/signal enums, severity, mode/action, permission mode, provenance, bounded counts/time | Raw hook payload, prompt, cwd, transcript, arguments, output, paths, domains, credentials, and tool-call IDs are dropped before OTLP. |
 | `codex.behavior_finding` | Phase 8 windowed analyzer | Derived signal; synthetic contract tested | HMAC run group, finding/category/severity/state, rule IDs, count/time window, fixed explanation/action, provenance | Deterministic investigation evidence only; not semantic intent or proof of malicious behaviour. |
+| `codex.behavior_analyzer_heartbeat` | Phase 8 windowed analyzer | Derived liveness signal; synthetic contract tested | Schema version, fixed completion state, bounded observation/finding counts, truncation flag, timestamp | Proves one analyzer invocation completed and reached OTLP; it does not prove continuous monitoring or agent health. |
 
 Hook coverage excludes hosted tools and any specialized path that opts out of
 the local function-tool hook path. `PostToolUse` evidence cannot undo a side

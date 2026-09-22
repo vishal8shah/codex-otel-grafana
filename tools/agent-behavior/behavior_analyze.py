@@ -8,6 +8,7 @@ import base64
 import datetime as dt
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -17,10 +18,13 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from behavior_common import (
+    ALLOWED_SEVERITIES,
+    ANALYZER_HEARTBEAT_EVENT,
     FINDING_EVENT,
     FINDING_SERVICE,
     OBSERVATION_EVENT,
     OBSERVATION_SERVICE,
+    SCHEMA_VERSION,
     finding_identifier,
     iso_utc,
     load_policy,
@@ -33,6 +37,23 @@ from behavior_common import (
 
 SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 STATE_ORDER = {"OBSERVED": 0, "COMPLETED": 1, "INCOMPLETE": 2, "BLOCKED": 3}
+HOOK_EVENTS = {
+    "SessionStart", "SessionEnd", "PreToolUse", "PostToolUse", "PermissionRequest",
+    "SubagentStart", "SubagentStop", "PreCompact", "PostCompact", "Stop", "Interrupt",
+}
+TOOL_CLASSES = {"shell", "file_edit", "mcp", "subagent", "lifecycle", "other"}
+POLICY_MODES = {"observe", "enforce"}
+POLICY_ACTIONS = {"observed", "allowed", "denied", "completed", "failed"}
+PERMISSION_MODES = {
+    "accept_edits", "bypass_permissions", "default", "dont_ask", "full_access", "never",
+    "plan", "read_only", "workspace_write", "unknown",
+}
+EVIDENCE_SOURCES = {"codex_hook", "synthetic_hook_fixture"}
+OBSERVATION_FIELDS = {
+    "schema_version", "run_hash", "turn_hash", "hook_event", "tool_class", "behavior_signal", "policy_rule_id",
+    "severity", "policy_mode", "policy_action", "permission_mode", "synthetic", "evidence_source",
+    "observed_at", "signal_count", "timestamp",
+}
 EXPLANATIONS = {
     "high_risk_action": "A deterministic high-risk tool-policy signal was observed.",
     "recon_to_sensitive_probe": "Reconnaissance was followed by a sensitive-resource probe in the selected window.",
@@ -55,7 +76,59 @@ NEXT_ACTIONS = {
 
 
 def parse_bool(value: Any) -> bool:
-    return str(value).strip().lower() == "true"
+    if isinstance(value, bool):
+        return value
+    normalized = str(value).strip().lower()
+    if normalized not in {"true", "false"}:
+        raise ValueError("observation boolean is invalid")
+    return normalized == "true"
+
+
+def validate_observation(row: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(row, dict) or set(row) - OBSERVATION_FIELDS:
+        raise ValueError("observation schema is invalid")
+    normalized = dict(row)
+    try:
+        schema_version = int(normalized.get("schema_version"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("observation schema version is invalid") from error
+    if schema_version != SCHEMA_VERSION:
+        raise ValueError("observation schema version is invalid")
+    normalized["schema_version"] = schema_version
+    if not re.fullmatch(r"[0-9a-f]{64}", str(normalized.get("run_hash", ""))):
+        raise ValueError("observation run hash is invalid")
+    turn_hash = str(normalized.get("turn_hash", ""))
+    if turn_hash and not re.fullmatch(r"[0-9a-f]{64}", turn_hash):
+        raise ValueError("observation turn hash is invalid")
+    if normalized.get("hook_event") not in HOOK_EVENTS or normalized.get("tool_class") not in TOOL_CLASSES:
+        raise ValueError("observation hook attributes are invalid")
+    rules = {str(item["signal"]): item for item in policy["rules"]}
+    signal = str(normalized.get("behavior_signal", ""))
+    if signal not in rules or not re.fullmatch(r"BEH-\d{3}", str(normalized.get("policy_rule_id", ""))):
+        raise ValueError("observation policy attributes are invalid")
+    if normalized.get("severity") not in ALLOWED_SEVERITIES:
+        raise ValueError("observation severity is invalid")
+    if normalized.get("policy_mode") not in POLICY_MODES or normalized.get("policy_action") not in POLICY_ACTIONS:
+        raise ValueError("observation action is invalid")
+    if normalized.get("permission_mode") not in PERMISSION_MODES:
+        raise ValueError("observation permission mode is invalid")
+    if normalized.get("evidence_source") not in EVIDENCE_SOURCES:
+        raise ValueError("observation evidence source is invalid")
+    normalized["synthetic"] = parse_bool(normalized.get("synthetic"))
+    try:
+        signal_count = int(normalized.get("signal_count"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("observation signal count is invalid") from error
+    if not 1 <= signal_count <= 1000:
+        raise ValueError("observation signal count is invalid")
+    normalized["signal_count"] = signal_count
+    if not isinstance(normalized.get("timestamp"), dt.datetime) or normalized["timestamp"].utcoffset() is None:
+        raise ValueError("observation timestamp is invalid")
+    observed_at = str(normalized.get("observed_at", ""))
+    if not observed_at:
+        raise ValueError("observation observed timestamp is invalid")
+    parse_iso(observed_at)
+    return normalized
 
 
 def grafana_headers() -> dict[str, str]:
@@ -92,7 +165,7 @@ def observations_from_loki(response: dict[str, Any]) -> tuple[list[dict[str, Any
     rows: list[dict[str, Any]] = []
     values_seen = 0
     allowed = {
-        "run_hash", "turn_hash", "hook_event", "tool_class", "behavior_signal", "policy_rule_id",
+        "schema_version", "run_hash", "turn_hash", "hook_event", "tool_class", "behavior_signal", "policy_rule_id",
         "severity", "policy_mode", "policy_action", "permission_mode", "synthetic", "evidence_source",
         "observed_at", "signal_count",
     }
@@ -160,7 +233,8 @@ def make_finding(run_hash: str, category: str, rows: list[dict[str, Any]], sever
 
 def correlate(observations: list[dict[str, Any]], policy: dict[str, Any]) -> list[dict[str, Any]]:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in observations:
+    for supplied in observations:
+        row = validate_observation(supplied, policy)
         grouped[str(row["run_hash"])].append(row)
     findings: list[dict[str, Any]] = []
     thresholds = policy["thresholds"]
@@ -169,6 +243,9 @@ def correlate(observations: list[dict[str, Any]], policy: dict[str, Any]) -> lis
         by_signal: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
             by_signal[str(row["behavior_signal"])].append(row)
+        subagent_starts = [
+            row for row in by_signal["subagent_activity"] if row.get("hook_event") == "SubagentStart"
+        ]
 
         for signal in (
             "sensitive_resource_probe", "destructive_filesystem_action", "control_bypass_attempt",
@@ -191,24 +268,25 @@ def correlate(observations: list[dict[str, Any]], policy: dict[str, Any]) -> lis
         for category, before, after, severity in sequence_specs:
             if category in emitted_categories or not by_signal[before] or not by_signal[after]:
                 continue
-            if category == "subagent_high_risk_sequence" and len(by_signal[before]) < thresholds["subagent_burst"]:
+            if category == "subagent_high_risk_sequence" and len(subagent_starts) < thresholds["subagent_burst"]:
                 continue
+            left_rows = subagent_starts if category == "subagent_high_risk_sequence" else by_signal[before]
             pairs = [
                 (left, right)
-                for left in by_signal[before]
+                for left in left_rows
                 for right in by_signal[after]
                 if dt.timedelta(0) <= right["timestamp"] - left["timestamp"] <= dt.timedelta(seconds=thresholds["correlation_window_seconds"])
             ]
             if pairs:
                 left, right = min(pairs, key=lambda pair: pair[1]["timestamp"])
-                matched = by_signal[before] + [right] if category == "subagent_high_risk_sequence" else [left, right]
+                matched = subagent_starts + [right] if category == "subagent_high_risk_sequence" else [left, right]
                 findings.append(make_finding(run_hash, category, matched, severity))
                 emitted_categories.add(category)
 
         denied = [row for row in rows if row.get("policy_action") == "denied"]
         if len(denied) >= thresholds["repeated_denial"]:
             findings.append(make_finding(run_hash, "repeated_denial", denied, "critical"))
-        subagents = by_signal["subagent_activity"]
+        subagents = subagent_starts
         if len(subagents) >= thresholds["subagent_burst"]:
             findings.append(make_finding(run_hash, "subagent_burst", subagents, "medium"))
         tool_rows = [row for row in rows if row.get("tool_class") in {"shell", "file_edit", "mcp", "other"}]
@@ -226,11 +304,16 @@ def correlate(observations: list[dict[str, Any]], policy: dict[str, Any]) -> lis
 
 
 def parse_fixture(path: str) -> list[dict[str, Any]]:
-    rows = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(rows, list):
+    supplied = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(supplied, list):
         raise ValueError("observation fixture must be a JSON array")
-    for row in rows:
-        row["timestamp"] = parse_iso(str(row.pop("timestamp")))
+    rows = []
+    for supplied_row in supplied:
+        if not isinstance(supplied_row, dict) or "timestamp" not in supplied_row:
+            raise ValueError("observation fixture row is invalid")
+        row = dict(supplied_row)
+        row["timestamp"] = parse_iso(str(row["timestamp"]))
+        rows.append(row)
     return rows
 
 
@@ -262,8 +345,18 @@ def main(argv: list[str] | None = None) -> int:
         findings = correlate(observations, policy)
         if args.output_json:
             Path(args.output_json).write_text(json.dumps(findings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        if args.emit_derived and findings:
-            post_otlp(args.otlp_logs_url, otlp_logs(FINDING_SERVICE, FINDING_EVENT, findings))
+        if args.emit_derived:
+            heartbeat = {
+                "schema_version": SCHEMA_VERSION,
+                "status": "completed",
+                "observed_at": iso_utc(utc_now()),
+                "observation_count": min(value_count, args.loki_limit),
+                "finding_count": min(len(findings), args.loki_limit),
+                "truncated": value_count >= args.loki_limit,
+            }
+            post_otlp(args.otlp_logs_url, otlp_logs(FINDING_SERVICE, ANALYZER_HEARTBEAT_EVENT, [heartbeat]))
+            if findings:
+                post_otlp(args.otlp_logs_url, otlp_logs(FINDING_SERVICE, FINDING_EVENT, findings))
         if value_count >= args.loki_limit:
             print("WARNING: observation query reached the configured limit; findings may be incomplete.", file=sys.stderr)
         counts: dict[str, int] = defaultdict(int)

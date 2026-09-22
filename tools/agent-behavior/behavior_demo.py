@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from behavior_analyze import correlate, observations_from_loki, query_loki
-from behavior_common import FINDING_EVENT, FINDING_SERVICE, OBSERVATION_EVENT, OBSERVATION_SERVICE, load_policy, otlp_logs, post_otlp, utc_now
+from behavior_common import ANALYZER_HEARTBEAT_EVENT, FINDING_EVENT, FINDING_SERVICE, OBSERVATION_EVENT, OBSERVATION_SERVICE, load_policy, otlp_logs, post_otlp, utc_now
 from behavior_monitor import normalize
 
 
@@ -117,6 +117,19 @@ def main(argv: list[str] | None = None) -> int:
         if not args.dry_run:
             post_rows(args.otlp_logs_url, OBSERVATION_SERVICE, OBSERVATION_EVENT, observations)
             post_rows(args.otlp_logs_url, FINDING_SERVICE, FINDING_EVENT, findings)
+            post_rows(
+                args.otlp_logs_url,
+                FINDING_SERVICE,
+                ANALYZER_HEARTBEAT_EVENT,
+                [{
+                    "schema_version": 1,
+                    "status": "completed",
+                    "observed_at": utc_now().isoformat().replace("+00:00", "Z"),
+                    "observation_count": len(observations),
+                    "finding_count": len(findings),
+                    "truncated": False,
+                }],
+            )
         report = {
             "profile": PROFILE,
             "proof_path": "synthetic hook fixtures -> privacy-safe observations -> deterministic findings -> OTLP/Loki/Grafana",
@@ -126,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
             "deterministic_findings": len(findings),
             "enforcement_decisions": dict(sorted(decisions.items())),
             "finding_categories": dict(sorted(categories.items())),
-            "monitor_no_data_scenario": "shown as stale or absent heartbeat; silence is not health evidence",
+            "monitor_no_data_scenario": "shown as stale or absent adapter/analyzer heartbeat; silence is not health evidence",
             "dangerous_side_effects_executed": False,
         }
         if args.report_json:

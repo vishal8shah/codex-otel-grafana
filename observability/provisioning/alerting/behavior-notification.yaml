@@ -51,7 +51,7 @@
           "dashboardUid": "codex-agent-behavior-security",
           "panelId": 1,
           "noDataState": "OK",
-          "execErrState": "OK",
+          "execErrState": "Error",
           "for": "0s",
           "annotations": {
             "summary": "A recent privacy-safe high or critical deterministic behaviour finding needs investigation; it is not proof of malicious intent.",

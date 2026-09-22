@@ -20,6 +20,7 @@ OBSERVATION_EVENT = "codex.behavior_observation"
 OBSERVATION_SERVICE = "Codex Agent Behavior Monitor"
 FINDING_EVENT = "codex.behavior_finding"
 FINDING_SERVICE = "Codex Agent Behavior Diagnosis"
+ANALYZER_HEARTBEAT_EVENT = "codex.behavior_analyzer_heartbeat"
 HEARTBEAT_SIGNAL = "monitor_heartbeat"
 ALLOWED_MODES = {"observe", "enforce"}
 ALLOWED_SEVERITIES = {"info", "low", "medium", "high", "critical"}
@@ -74,6 +75,8 @@ def load_policy(path: Path) -> dict[str, Any]:
             [re.compile(str(item), re.IGNORECASE) for item in policy[key]]
         except re.error as error:
             raise ValueError("policy pattern is invalid") from error
+    if any(not isinstance(host, str) or not host.strip() for host in policy["safe_exceptions"]):
+        raise ValueError("policy safe host is invalid")
     thresholds = policy.get("thresholds")
     if not isinstance(thresholds, dict) or any(not isinstance(value, int) or value < 1 for value in thresholds.values()):
         raise ValueError("policy thresholds are invalid")

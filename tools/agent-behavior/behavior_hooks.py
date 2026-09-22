@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import secrets
+import stat
 import sys
 from pathlib import Path
 from typing import Any
@@ -16,26 +18,28 @@ EVENTS = (
     "SubagentStart", "SubagentStop", "PreCompact", "PostCompact", "Stop", "Interrupt",
 )
 MARKER = "behavior_monitor.py"
+MARKER_STATUS = "Recording privacy-safe behaviour evidence"
 
 
 def quote(value: Path) -> str:
     return f'"{value}"'
 
 
-def handler(script: Path, key_file: Path) -> dict[str, Any]:
+def handler(script: Path, key_file: Path, event: str = "PreToolUse") -> dict[str, Any]:
     python_executable = Path(sys.executable).resolve()
     invocation = f"{quote(python_executable)} {quote(script)} --hash-key-file {quote(key_file)}"
     return {
         "type": "command",
         "command": invocation,
         "command_windows": invocation,
-        "timeout": 10,
-        "statusMessage": "Recording privacy-safe behaviour evidence",
+        "timeout": 3 if event in {"SessionEnd", "Interrupt"} else 10,
+        "statusMessage": MARKER_STATUS,
     }
 
 
 def is_ours(item: dict[str, Any]) -> bool:
-    return MARKER in str(item.get("command", "")) or MARKER in str(item.get("command_windows", ""))
+    commands = f"{item.get('command', '')} {item.get('command_windows', '')}"
+    return item.get("statusMessage") == MARKER_STATUS and MARKER in commands
 
 
 def load_hooks(path: Path) -> dict[str, Any]:
@@ -57,13 +61,24 @@ def install(root: Path) -> None:
     hooks_path = config_dir / "hooks.json"
     key_path = config_dir / "behavior-monitor.key"
     if not key_path.exists():
-        key_path.write_text(secrets.token_hex(32) + "\n", encoding="utf-8")
+        descriptor = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(secrets.token_hex(32) + "\n")
+    if os.name != "nt":
+        key_path.chmod(0o600)
     payload = load_hooks(hooks_path)
     script = Path(__file__).with_name("behavior_monitor.py").resolve()
     for event in EVENTS:
         groups = payload["hooks"].setdefault(event, [])
-        groups = [group for group in groups if not any(is_ours(item) for item in group.get("hooks", []))]
-        group: dict[str, Any] = {"hooks": [handler(script, key_path.resolve())]}
+        preserved = []
+        for existing in groups:
+            handlers = [item for item in existing.get("hooks", []) if not is_ours(item)]
+            if handlers:
+                updated = dict(existing)
+                updated["hooks"] = handlers
+                preserved.append(updated)
+        groups = preserved
+        group: dict[str, Any] = {"hooks": [handler(script, key_path.resolve(), event)]}
         if event in {"PreToolUse", "PostToolUse", "PermissionRequest"}:
             group["matcher"] = "*"
         groups.append(group)
@@ -86,7 +101,10 @@ def check(root: Path) -> int:
         if any(is_ours(item) for group in groups for item in group.get("hooks", []))
     }
     missing = sorted(set(EVENTS) - configured)
-    if missing or not key_path.exists() or len(key_path.read_text(encoding="utf-8").strip()) < 32:
+    key_valid = key_path.exists() and len(key_path.read_text(encoding="utf-8").strip()) >= 32
+    if key_valid and os.name != "nt":
+        key_valid = stat.S_IMODE(key_path.stat().st_mode) == 0o600
+    if missing or not key_valid:
         print(f"INCOMPLETE: missing_hooks={','.join(missing) or 'none'} key_present={key_path.exists()}")
         return 1
     print(f"OK: {len(configured)} behaviour hook events configured; local HMAC key present.")

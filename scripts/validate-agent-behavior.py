@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BEHAVIOR = ROOT / "tools" / "agent-behavior"
 sys.path.insert(0, str(BEHAVIOR))
 
-from behavior_common import OBSERVATION_EVENT, OBSERVATION_SERVICE, load_policy, otlp_logs  # noqa: E402
+from behavior_common import ANALYZER_HEARTBEAT_EVENT, OBSERVATION_EVENT, OBSERVATION_SERVICE, load_policy, otlp_logs  # noqa: E402
 from behavior_demo import build_observations  # noqa: E402
 from behavior_hooks import EVENTS  # noqa: E402
 from behavior_monitor import SUPPORTED_HOOKS, UNSAFE_ATTRIBUTE_NAMES, assert_safe  # noqa: E402
@@ -73,10 +73,14 @@ def main() -> int:
         fail(f"Behaviour dashboard queries unsafe fields: {bad_terms}")
     if "codex.behavior_finding" not in queries or "codex.behavior_observation" not in queries:
         fail("Behaviour dashboard does not cover both safe event streams")
+    if ANALYZER_HEARTBEAT_EVENT not in queries:
+        fail("Behaviour dashboard does not expose analyzer heartbeat evidence")
 
     alert_text = (ROOT / "observability" / "provisioning" / "alerting" / "behavior-notification.yaml").read_text(encoding="utf-8")
     if 'severity=~\\"high|critical\\"' not in alert_text or "codex.behavior_finding" not in alert_text:
         fail("Behaviour alert does not target fresh high/critical findings")
+    if '"execErrState": "Error"' not in alert_text:
+        fail("Behaviour alert must expose query evaluation errors")
 
     print(f"Validated {len(observations)} safe demo observations, {len(EXPECTED_HOOKS)} hook events, dashboard, and alert contracts")
     return 0

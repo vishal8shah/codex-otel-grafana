@@ -61,7 +61,10 @@
       "type": "stat",
       "gridPos": {"x": 18, "y": 0, "w": 6, "h": 5},
       "datasource": {"type": "loki", "uid": "loki"},
-      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | behavior_signal=\"monitor_heartbeat\" [5m]))", "queryType": "range"}],
+      "targets": [
+        {"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | behavior_signal=\"monitor_heartbeat\" [5m]))", "legendFormat": "adapter session starts", "queryType": "range"},
+        {"refId": "B", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_analyzer_heartbeat\" [5m]))", "legendFormat": "analyzer runs", "queryType": "range"}
+      ],
       "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "auto"},
       "fieldConfig": {"defaults": {"noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []}
     },
