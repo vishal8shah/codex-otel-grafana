@@ -1,9 +1,16 @@
-# Codex Stuck Candidate Notification
+# Codex Local Diagnostic Notifications
 
 This opt-in local feature routes recent `STUCK_CANDIDATE` evidence from the
 shipped derived `codex.run_health` stream to a development webhook. Grafana does
 not classify raw Codex telemetry. The run-health watcher must keep emitting the
 derived snapshots that the alert rule evaluates.
+
+Phase 8 also provisions `Codex high-risk behaviour finding detected` over fresh,
+privacy-safe `codex.behavior_finding` records. It uses the same local receiver,
+groups by `run_hash` and `finding_id`, and routes captured proof to the Agent
+Behaviour Security dashboard. Emit labelled side-effect-free evidence with
+`scripts/behavior-demo.ps1 --profile incident-safe` or
+`scripts/behavior-demo.sh --profile incident-safe`.
 
 ## Run locally
 
@@ -53,6 +60,11 @@ stuck snapshot is produced, but an earlier stuck snapshot can remain eligible
 until the two-minute lookback expires, plus the next one-minute evaluation.
 The alert means investigation is needed; it is not proof of a Codex bug.
 
+The behaviour rule selects only `high` or `critical` deterministic findings in
+the most recent two minutes. It is investigation evidence, not proof of
+malicious intent or complete containment. Heartbeat and no-data status remain
+separate dashboard signals.
+
 `noDataState=OK` and `execErrState=OK` are deliberately fail-open for this
 development proof. Notification silence can mean healthy, but it can also mean
 the analyzer stopped, Loki or the query failed, alert provisioning failed,
@@ -77,7 +89,7 @@ Notification works only when every link is present:
 
 1. The LGTM/Grafana stack is running.
 2. Codex telemetry is arriving.
-3. The watcher/analyzer is running with derived emission enabled.
+3. The relevant watcher/analyzer is running with derived emission enabled, or the safe behaviour demo has emitted findings.
 4. The alert rule is provisioned.
 5. The contact point and rule-specific notification policy are configured.
 6. The webhook, email, or Slack destination is reachable.

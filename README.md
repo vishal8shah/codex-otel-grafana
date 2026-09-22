@@ -15,7 +15,8 @@ This repository provides a local-first diagnostic kit for OpenAI Codex on
 Windows, macOS, and Linux using Docker and `grafana/otel-lgtm`.
 
 For developers running Codex locally who want privacy-safe evidence about
-stuck runs, tool failures, API request reliability, and slow contributors.
+stuck runs, tool failures, API request reliability, slow contributors, and
+deterministic behaviour-security signals from supported local tool paths.
 
 ## Start Here
 
@@ -26,10 +27,10 @@ stuck runs, tool failures, API request reliability, and slow contributors.
 | Rebuild or configure the stack manually | [Use the full setup guide](docs/rebuild-guide.html) |
 | Understand what data crosses the privacy boundary | [Inspect the architecture and privacy model](docs/architecture-and-operations.html) |
 
-The kit helps investigate four focused pain classes: stuck or incomplete runs,
-failed or missing tool results, API request reliability, and slow confirmed API
-or tool contributors. The Diagnostic Command Center surfaces those categories
-and routes to the relevant dashboard; it does not rank them.
+The kit helps investigate stuck or incomplete runs, failed or missing tool
+results, API reliability, slow confirmed contributors, and bounded agent-
+behaviour findings. The Diagnostic Command Center routes to the relevant
+dashboard; it does not rank findings or infer malicious intent.
 
 ## Positioning
 
@@ -88,6 +89,8 @@ and prints the Command Center URL. See the detailed
   and local development webhook receiver
 - A Diagnostic Command Center front door that summarizes shipped derived
   evidence and routes users to the relevant focused dashboard
+- An opt-in, observe-first behaviour hook adapter, deterministic correlation
+  analyzer, safe enforcement demo, focused dashboard, and local high-risk alert
 
 ## Dashboards
 
@@ -102,6 +105,7 @@ After setup, open Grafana with `admin` / `admin`:
 - [Codex API Request Reliability](http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability)
 - [Codex Slow Contributor Triage](http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage)
 - [Codex Diagnostic Command Center](http://localhost:3000/d/codex-diagnostic-command-center/codex-diagnostic-command-center)
+- [Codex Agent Behaviour Security](http://localhost:3000/d/codex-agent-behavior-security/codex-agent-behavior-security)
 
 ## Capability Matrix
 
@@ -114,6 +118,7 @@ After setup, open Grafana with `admin` / `admin`:
 | API/backend reliability | **Shipped** | API Request Reliability groups confirmed request evidence by privacy-safe run and endpoint hashes. |
 | Slow confirmed contributors | **Shipped** | Slow Contributor Triage uses confirmed API and tool durations; it does not measure full turn latency. |
 | Where do I start? | **Shipped** | Diagnostic Command Center summarizes existing privacy-safe derived evidence by pain class and links to the focused dashboards. |
+| Supported local agent behaviour | **Shipped / bounded** | Deterministic hook rules and run-window correlations surface supported lifecycle, tool, approval, subagent, boundary, persistence, destructive, and external-write signals. They do not infer semantic intent or cover every hosted tool. |
 | Token/cost ambiguity | **Partial / not claimed for burn** | Completed-run economics is distinct from token burn without completion. |
 
 Token burn without completion was removed from Phase 2 because the required raw
@@ -351,6 +356,59 @@ Repeated emissions may create table snapshots; stats count unique contributor
 groups over the selected range. See
 [the schema gate and analyzer guide](tools/slow-contributor/README.md).
 
+## Codex Agent Behaviour Security
+
+Phase 8 adds an opt-in repository-local hook adapter and deterministic
+run-window analyzer inspired by the publicly documented Hugging Face agent
+incident. It observes supported local Codex lifecycle, tool, approval,
+subagent, compaction, stop, and interrupt events. Observation is the default;
+the safe demo explicitly exercises enforcement decisions without executing a
+dangerous action.
+
+```powershell
+.\scripts\behavior-demo.ps1 --profile incident-safe
+.\scripts\behavior-analyze.ps1 -EmitDerived
+.\scripts\behavior-hooks.ps1 install
+.\scripts\behavior-hooks.ps1 check
+```
+
+```bash
+./scripts/behavior-demo.sh --profile incident-safe
+./scripts/behavior-analyze.sh --emit-derived
+./scripts/behavior-hooks.sh install
+./scripts/behavior-hooks.sh check
+```
+
+The synthetic profile demonstrates normal use, recovery after a failed tool,
+approval evidence, repeated probing, sensitive-resource-to-egress correlation,
+blocked destructive/persistence/public-mutation patterns, subagent fan-out,
+compaction, interruption, and heartbeat/no-data guidance. Raw commands in the
+synthetic generator are classified in memory and never emitted or executed.
+
+The focused dashboard exposes severity, state, category, policy rule, evidence
+provenance, tool class, subagent activity, and heartbeat status. Its findings
+are investigation evidence, not proof of malicious intent, reward hacking,
+deception, concealment, goal drift, or a Codex bug. Hooks do not cover every
+hosted or specialized tool path, and post-tool evidence cannot undo side
+effects. Silence is not health evidence.
+
+For a presentation-ready explanation of the architecture, every dashboard
+panel, the privacy boundary, and the five-minute demo flow, open the
+[self-contained Phase 8 demo deck](docs/agent-behavior-demo-deck.html). The
+deck embeds reviewed local Grafana screenshots and links to the live dashboard;
+it does not depend on external fonts, scripts, or image files at runtime.
+
+For the harmless live proof, start interactive `codex`, allow it to print one
+non-sensitive word with a read-only command, exit cleanly, then run
+`.\scripts\behavior-demo.ps1 --verify-live` or
+`./scripts/behavior-demo.sh --verify-live`. Remove the repository-local hook
+handlers with `behavior-hooks remove`. See the complete
+[Phase 8 guide](tools/agent-behavior/README.md).
+
+Sources and claim boundary: [OpenAI's incident analysis](https://openai.com/index/hugging-face-incident-and-the-road-ahead/),
+[Hugging Face's technical timeline](https://huggingface.co/blog/agent-intrusion-technical-timeline),
+and the [official Codex hooks documentation](https://learn.chatgpt.com/docs/hooks).
+
 ## Full Manual Setup
 
 Copy `.env.example` to `.env` only if you need to change the safe local
@@ -368,6 +426,7 @@ adding appropriate security controls.
 .\scripts\tool-failure.ps1
 .\scripts\api-reliability.ps1
 .\scripts\slow-contributor.ps1
+.\scripts\behavior-analyze.ps1
 # Optional, in a separate terminal after starting the local webhook receiver:
 .\scripts\watch-stuck.ps1 -EmitDerived
 codex
@@ -386,6 +445,7 @@ Windows users who need the original direct `docker run` path.
 ./scripts/tool-failure.sh
 ./scripts/api-reliability.sh
 ./scripts/slow-contributor.sh
+./scripts/behavior-analyze.sh
 # Optional, in a separate terminal after starting the local webhook receiver:
 ./scripts/watch-stuck.sh --emit-derived
 codex

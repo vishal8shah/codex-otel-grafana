@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "lookback",
+        "label": "Lookback",
+        "type": "custom",
+        "query": "15m,1h,6h,24h",
+        "current": {"selected": true, "text": "6h", "value": "6h"},
+        "options": [
+          {"selected": false, "text": "15m", "value": "15m"},
+          {"selected": false, "text": "1h", "value": "1h"},
+          {"selected": true, "text": "6h", "value": "6h"},
+          {"selected": false, "text": "24h", "value": "24h"}
+        ],
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "annotations": {"list": []},
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "High / critical finding groups",
+      "description": "Unique privacy-safe finding groups with high or critical deterministic evidence.",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, finding_id) (count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\" | severity=~\"high|critical\" [${lookback}])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "area", "textMode": "auto"},
+      "fieldConfig": {"defaults": {"noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 3}]}}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "title": "Blocked finding groups",
+      "type": "stat",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "count(sum by (run_hash, finding_id) (count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\" | state=\"BLOCKED\" [${lookback}])))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none", "textMode": "auto"},
+      "fieldConfig": {"defaults": {"noValue": "0"}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "title": "Observed policy actions",
+      "type": "stat",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | policy_action=~\"observed|allowed|completed|failed|denied\" [${lookback}]))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "area", "textMode": "auto"},
+      "fieldConfig": {"defaults": {"noValue": "0"}, "overrides": []}
+    },
+    {
+      "id": 4,
+      "title": "Monitor heartbeat (last 5m)",
+      "description": "A zero means no recent SessionStart heartbeat was observed; it does not prove the monitored agent is healthy or unhealthy.",
+      "type": "stat",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | behavior_signal=\"monitor_heartbeat\" [5m]))", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "auto"},
+      "fieldConfig": {"defaults": {"noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []}
+    },
+    {
+      "id": 5,
+      "title": "Findings by category and severity",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 5, "w": 12, "h": 8},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (category, severity) (count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\" [1m]))", "legendFormat": "{{severity}} · {{category}}", "queryType": "range"}],
+      "fieldConfig": {"defaults": {"custom": {"drawStyle": "bars", "lineWidth": 1, "fillOpacity": 40, "stacking": {"mode": "normal", "group": "A"}}}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "id": 6,
+      "title": "Tool activity by class and action",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 5, "w": 12, "h": 8},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (tool_class, policy_action) (count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | tool_class=~\"shell|file_edit|mcp|subagent|other\" [1m]))", "legendFormat": "{{tool_class}} · {{policy_action}}", "queryType": "range"}],
+      "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "id": 7,
+      "title": "Permission requests and denials",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 13, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | hook_event=\"PermissionRequest\" [${lookback}]))", "legendFormat": "requests", "queryType": "range"},
+        {"refId": "B", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum(count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | policy_action=\"denied\" [${lookback}]))", "legendFormat": "denied", "queryType": "range"}
+      ],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none", "textMode": "name"},
+      "fieldConfig": {"defaults": {"noValue": "0"}, "overrides": []}
+    },
+    {
+      "id": 8,
+      "title": "Subagent lifecycle and fan-out",
+      "type": "stat",
+      "gridPos": {"x": 6, "y": 13, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (hook_event) (count_over_time({service_name=\"Codex Agent Behavior Monitor\"} | event_name=\"codex.behavior_observation\" | tool_class=\"subagent\" [${lookback}]))", "legendFormat": "{{hook_event}}", "queryType": "range"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none", "textMode": "name"},
+      "fieldConfig": {"defaults": {"noValue": "0"}, "overrides": []}
+    },
+    {
+      "id": 9,
+      "title": "Evidence provenance",
+      "type": "piechart",
+      "gridPos": {"x": 12, "y": 13, "w": 6, "h": 5},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "sum by (evidence_source) (count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\" [${lookback}]))", "legendFormat": "{{evidence_source}}", "queryType": "range"}],
+      "options": {"legend": {"displayMode": "list", "placement": "right"}, "pieType": "donut", "reduceOptions": {"calcs": ["lastNotNull"]}}
+    },
+    {
+      "id": 10,
+      "title": "Coverage status",
+      "type": "text",
+      "gridPos": {"x": 18, "y": 13, "w": 6, "h": 5},
+      "options": {"mode": "markdown", "content": "**Direct:** local lifecycle, supported local tools, approvals, subagents, compaction and interrupts.\n\n**Not covered:** private reasoning, semantic intent, packets, OS audit, hosted-tool internals, or production SOC/SIEM guarantees."}
+    },
+    {
+      "id": 11,
+      "title": "Correlated behaviour timeline",
+      "type": "logs",
+      "gridPos": {"x": 0, "y": 18, "w": 24, "h": 10},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"refId": "A", "datasource": {"type": "loki", "uid": "loki"}, "expr": "{service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\"", "queryType": "range"}],
+      "options": {"showTime": true, "showLabels": true, "showCommonLabels": false, "wrapLogMessage": false, "prettifyLogMessage": false, "enableLogDetails": true, "sortOrder": "Descending"}
+    },
+    {
+      "id": 12,
+      "title": "Interpretation boundary",
+      "type": "text",
+      "gridPos": {"x": 0, "y": 28, "w": 24, "h": 6},
+      "options": {"mode": "markdown", "content": "Findings are deterministic investigation evidence, not proof of malicious intent, reward hacking, deception, concealment, or a Codex defect. **Observe** is the default. Only an explicitly enabled enforcement profile can deny supported pre-tool actions. Hooks do not cover every hosted or specialized tool path, and post-tool evidence cannot undo a completed side effect. A missing heartbeat or alert is not health evidence."}
+    }
+  ],
+  "tags": ["codex", "opentelemetry", "security", "behavior", "phase-8", "derived"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {"hidden": true},
+  "timezone": "browser",
+  "refresh": "30s",
+  "title": "Codex Agent Behaviour Security",
+  "uid": "codex-agent-behavior-security"
+}

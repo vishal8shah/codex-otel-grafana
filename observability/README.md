@@ -24,6 +24,7 @@ The `Codex Observability` folder in Grafana contains:
 - Codex API Request Reliability: http://localhost:3000/d/codex-api-request-reliability/codex-api-request-reliability
 - Codex Slow Contributor Triage: http://localhost:3000/d/codex-slow-contributor-triage/codex-slow-contributor-triage
 - Codex Diagnostic Command Center: http://localhost:3000/d/codex-diagnostic-command-center/codex-diagnostic-command-center
+- Codex Agent Behaviour Security: http://localhost:3000/d/codex-agent-behavior-security/codex-agent-behavior-security
 
 These dashboards use the labels emitted by Codex CLI/Desktop on this machine:
 `service_name="Codex Desktop"` in Loki, `service="Codex Desktop"` in Prometheus
@@ -44,6 +45,12 @@ needed only because Grafana reaches the host through `host.docker.internal`.
 See its README for
 the two-minute lookback, four-hour repeat interval, privacy boundary, and full
 dependency chain.
+
+The provisioning also includes a `Codex high-risk behaviour finding detected`
+rule over fresh derived `codex.behavior_finding` records. It uses the same local
+development receiver. No-data and execution errors remain fail-open for this
+development proof, so an absent alert is not health evidence; inspect the
+focused dashboard heartbeat and pipeline checks separately.
 
 The PowerShell publisher remains as a legacy manual refresh for the direct-run
 or other non-file-provisioned path, and as a parity comparison/export source:
@@ -76,10 +83,11 @@ later observed.
 
 The Command Center is a light navigation front door for users who already have
 the local kit running. It queries only existing `codex.run_health`,
-`codex.tool_diagnostic`, `codex.api_diagnostic`, and `codex.slow_contributor`
+`codex.tool_diagnostic`, `codex.api_diagnostic`, `codex.slow_contributor`, and
+`codex.behavior_finding`
 derived logs. It deduplicates issue groups at the same privacy-safe grains used
 by the focused dashboards and links to each detailed view with the selected
-lookback. The default six-hour lookback matches all four detailed dashboards.
+lookback. The default six-hour lookback matches the focused dashboards.
 
 It does not classify raw telemetry, add an analyzer state, replace Phase 6
 notification, solve setup/onboarding, or provide production monitoring. Zero or
@@ -95,6 +103,28 @@ pricing before budgeting.
 ```logql
 {service_name="Codex Desktop"} | event_name="codex.sse_event" | event_kind="response.completed"
 ```
+
+## Codex Agent Behaviour Security
+
+The Phase 8 dashboard combines privacy-safe hook observations with deterministic
+derived findings. The hook adapter defaults to observe-only and emits HMAC run
+and turn groups, lifecycle/tool class, safe rule and signal enums, severity,
+policy action, permission mode, provenance, and bounded timing/count evidence.
+Raw hook input, responses, prompts, commands, arguments, output, paths,
+transcripts, credentials, domains, and source identifiers are never emitted.
+
+```text
+python tools/agent-behavior/behavior_demo.py --profile incident-safe
+python tools/agent-behavior/behavior_analyze.py --emit-derived
+python tools/agent-behavior/behavior_hooks.py install --root .
+```
+
+The incident-safe profile is synthetic and side-effect-free. A harmless live
+interactive proof is separate and must be opted into through repository-local
+hooks. The dashboard does not infer malicious intent, private reasoning,
+deception, reward hacking, concealment, or goal drift. Hosted-tool coverage,
+packet/OS audit, complete containment, and production SOC/SIEM operation are
+not claimed. See `tools/agent-behavior/README.md` for setup and removal.
 
 ## Codex Stuck Triage
 

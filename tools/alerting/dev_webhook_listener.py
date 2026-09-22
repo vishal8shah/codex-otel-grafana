@@ -60,10 +60,13 @@ def safe_notification(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("notification alerts must be a list")
 
     safe_alerts: list[dict[str, str]] = []
+    behavior_alert = False
     for alert in alerts:
         if not isinstance(alert, dict):
             continue
         labels = alert.get("labels") if isinstance(alert.get("labels"), dict) else {}
+        if labels.get("diagnostic") == "codex_agent_behavior" or labels.get("alertname") == "Codex high-risk behaviour finding detected":
+            behavior_alert = True
         run_hash = str(labels.get("run_hash", ""))
         if run_hash and not SAFE_HASH.fullmatch(run_hash):
             raise ValueError("run_hash is not a 64-character hexadecimal privacy-safe hash")
@@ -78,14 +81,16 @@ def safe_notification(payload: dict[str, Any]) -> dict[str, Any]:
             safe_alert["run_hash"] = run_hash
         safe_alerts.append(safe_alert)
 
+    dashboard = "http://localhost:3000/d/codex-agent-behavior-security/codex-agent-behavior-security" if behavior_alert else "http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage"
+    playbook = "https://vishal8shah.github.io/codex-otel-grafana/#agent-behavior" if behavior_alert else "https://vishal8shah.github.io/codex-otel-grafana/#playbook"
     return {
         "received_at": utc_now(),
         "receiver": "Codex local dev webhook",
         "status": str(payload.get("status", "unknown")),
         "alert_count": len(safe_alerts),
         "alerts": safe_alerts,
-        "dashboard": "http://localhost:3000/d/codex-stuck-burn-triage/codex-stuck-burn-triage",
-        "playbook": "https://vishal8shah.github.io/codex-otel-grafana/#playbook",
+        "dashboard": dashboard,
+        "playbook": playbook,
     }
 
 

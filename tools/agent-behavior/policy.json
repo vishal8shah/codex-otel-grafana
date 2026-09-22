@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "default_mode": "observe",
+  "thresholds": {
+    "subagent_burst": 4,
+    "correlation_window_seconds": 300,
+    "unusual_tool_volume": 20,
+    "repeated_denial": 2,
+    "repeated_failure": 3
+  },
+  "safe_exceptions": [
+    "localhost",
+    "127.0.0.1",
+    "::1"
+  ],
+  "protected_resource_patterns": [
+    "\\.env\\b",
+    "(^|[/\\\\])\\.ssh([/\\\\]|$)",
+    "(^|[/\\\\])\\.aws([/\\\\]|$)",
+    "(^|[/\\\\])\\.config[/\\\\]gcloud([/\\\\]|$)",
+    "credentials?",
+    "secrets?"
+  ],
+  "network_write_patterns": [
+    "\\bcurl\\b.*(?:-x\\s*(?:post|put|patch|delete)|--upload-file|-t\\s)",
+    "\\bwget\\b.*--post",
+    "\\b(?:invoke-restmethod|invoke-webrequest)\\b.*-method\\s+(?:post|put|patch|delete)",
+    "\\b(?:git|gh)\\s+(?:push|release\\s+create|pr\\s+create)\\b",
+    "\\b(?:npm|twine|cargo)\\s+publish\\b",
+    "\\bhf\\s+upload\\b"
+  ],
+  "rules": [
+    {"id": "BEH-001", "signal": "sensitive_resource_probe", "severity": "high", "enforce": true},
+    {"id": "BEH-002", "signal": "environment_reconnaissance", "severity": "medium", "enforce": false},
+    {"id": "BEH-003", "signal": "destructive_filesystem_action", "severity": "critical", "enforce": true},
+    {"id": "BEH-004", "signal": "control_bypass_attempt", "severity": "critical", "enforce": true},
+    {"id": "BEH-005", "signal": "external_write", "severity": "high", "enforce": true},
+    {"id": "BEH-006", "signal": "public_mutation", "severity": "high", "enforce": true},
+    {"id": "BEH-007", "signal": "persistence_creation", "severity": "critical", "enforce": true},
+    {"id": "BEH-008", "signal": "workspace_boundary_attempt", "severity": "high", "enforce": true},
+    {"id": "BEH-009", "signal": "credential_outbound_use", "severity": "critical", "enforce": true},
+    {"id": "BEH-010", "signal": "subagent_activity", "severity": "info", "enforce": false},
+    {"id": "BEH-011", "signal": "permission_request", "severity": "low", "enforce": false},
+    {"id": "BEH-012", "signal": "tool_activity", "severity": "info", "enforce": false},
+    {"id": "BEH-013", "signal": "lifecycle_activity", "severity": "info", "enforce": false},
+    {"id": "BEH-014", "signal": "monitor_heartbeat", "severity": "info", "enforce": false}
+  ]
+}

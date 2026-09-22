@@ -51,6 +51,16 @@ class SafeNotificationTests(unittest.TestCase):
                 {"status": "firing", "alerts": [{"labels": {"run_hash": "raw-id"}}]}
             )
 
+    def test_behavior_alert_routes_to_behavior_dashboard(self) -> None:
+        record = MODULE.safe_notification(
+            {
+                "status": "firing",
+                "alerts": [{"labels": {"alertname": "Codex high-risk behaviour finding detected", "run_hash": "b" * 64}}],
+            }
+        )
+        self.assertIn("codex-agent-behavior-security", record["dashboard"])
+        self.assertTrue(record["playbook"].endswith("#agent-behavior"))
+
 
 if __name__ == "__main__":
     unittest.main()

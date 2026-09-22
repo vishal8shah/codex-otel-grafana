@@ -46,6 +46,12 @@
       "title": "Codex Slow Contributor Triage",
       "url": "/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now",
       "targetBlank": false
+    },
+    {
+      "type": "link",
+      "title": "Codex Agent Behaviour Security",
+      "url": "/d/codex-agent-behavior-security/codex-agent-behavior-security?from=now-${lookback}&to=now",
+      "targetBlank": false
     }
   ],
   "panels": [
@@ -56,7 +62,7 @@
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
       "options": {
         "mode": "markdown",
-        "content": "Select **Lookback** above. The four cards count unique privacy-safe issue groups from existing derived snapshots. The default is **6h**, matching every focused dashboard. A zero or empty card means only that no matching derived issue snapshot exists in the selected lookback; it does not prove health."
+        "content": "Select **Lookback** above. The cards count unique privacy-safe issue groups from existing derived snapshots. The default is **6h**, matching every focused dashboard. A zero or empty card means only that no matching derived issue snapshot exists in the selected lookback; it does not prove health."
       }
     },
     {
@@ -188,27 +194,59 @@
       "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
     },
     {
+      "id": 8,
+      "title": "Agent behaviour security findings",
+      "description": "Unique privacy-safe high or critical deterministic behaviour finding groups in the selected lookback; not proof of malicious intent.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "count(sum by (run_hash, finding_id) (count_over_time({service_name=\"Codex Agent Behavior Diagnosis\"} | event_name=\"codex.behavior_finding\" | severity=~\"high|critical\" [${lookback}])))",
+          "queryType": "range"
+        }
+      ],
+      "links": [
+        {
+          "title": "Open Codex Agent Behaviour Security",
+          "url": "/d/codex-agent-behavior-security/codex-agent-behavior-security?from=now-${lookback}&to=now",
+          "targetBlank": false
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] }
+    },
+    {
       "id": 6,
       "title": "Start here",
       "type": "text",
-      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 9 },
       "options": {
         "mode": "markdown",
-        "content": "| Evidence category | Open first | What to inspect |\n|---|---|---|\n| Stuck or incomplete run | [Codex Stuck Triage](/d/codex-stuck-burn-triage/codex-stuck-burn-triage?from=now-${lookback}&to=now) | Privacy-safe run grouping, state, quiet time, and source window |\n| Failed or missing tool result | [Codex Tool Failure Diagnosis](/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis?from=now-${lookback}&to=now) | Run/tool grouping and result evidence |\n| Failed, retried, slow, or incomplete API evidence | [Codex API Request Reliability](/d/codex-api-request-reliability/codex-api-request-reliability?from=now-${lookback}&to=now) | Run/endpoint grouping, state, status bucket, and bounded duration/attempt evidence |\n| Slow API or tool contributor | [Codex Slow Contributor Triage](/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now) | Confirmed contributor grouping, duration, threshold, and source window |\n\nOpen the focused dashboard with the strongest non-zero category. Treat every category as investigation evidence, not proof of a product bug."
+        "content": "| Evidence category | Open first | What to inspect |\n|---|---|---|\n| Stuck or incomplete run | [Codex Stuck Triage](/d/codex-stuck-burn-triage/codex-stuck-burn-triage?from=now-${lookback}&to=now) | Privacy-safe run grouping, state, quiet time, and source window |\n| Failed or missing tool result | [Codex Tool Failure Diagnosis](/d/codex-tool-failure-diagnosis/codex-tool-failure-diagnosis?from=now-${lookback}&to=now) | Run/tool grouping and result evidence |\n| Failed, retried, slow, or incomplete API evidence | [Codex API Request Reliability](/d/codex-api-request-reliability/codex-api-request-reliability?from=now-${lookback}&to=now) | Run/endpoint grouping, state, status bucket, and bounded duration/attempt evidence |\n| Slow API or tool contributor | [Codex Slow Contributor Triage](/d/codex-slow-contributor-triage/codex-slow-contributor-triage?from=now-${lookback}&to=now) | Confirmed contributor grouping, duration, threshold, and source window |\n| High or critical deterministic behaviour finding | [Codex Agent Behaviour Security](/d/codex-agent-behavior-security/codex-agent-behavior-security?from=now-${lookback}&to=now) | Rule IDs, severity, state, provenance, sequence, and monitor heartbeat |\n\nOpen the focused dashboard with the strongest non-zero category. Treat every category as investigation evidence, not proof of a product bug or malicious intent."
       }
     },
     {
       "id": 7,
       "title": "Known boundaries",
       "type": "text",
-      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 7 },
+      "gridPos": { "x": 0, "y": 23, "w": 24, "h": 8 },
       "options": {
         "mode": "markdown",
-        "content": "- Summarizes existing privacy-safe **derived records only**; it does not classify source telemetry directly.\n- Analyzers and optional watchers must emit fresh derived snapshots. Silence or zero counts do not prove health.\n- CI validates static structure and unit behavior; it does not run the local telemetry-to-Grafana path.\n- These are navigation cues and investigation evidence, not proof of a product bug.\n- This is a light front door for an already-running local kit, not onboarding, alerting, notification replacement, or production monitoring.\n- Phase 6 stuck-notification semantics are unchanged."
+        "content": "- Summarizes existing privacy-safe **derived records only**; it does not classify source telemetry directly.\n- Analyzers and optional watchers must emit fresh derived snapshots. Silence or zero counts do not prove health.\n- Behaviour findings are deterministic investigation evidence, not proof of malicious intent, reward hacking, deception, concealment, or a Codex defect.\n- CI validates static structure and unit behavior; it does not run the local telemetry-to-Grafana path.\n- These are navigation cues and investigation evidence, not proof of a product bug.\n- This is a light front door for an already-running local kit, not onboarding, alerting, notification replacement, or production monitoring.\n- Phase 6 stuck-notification semantics are unchanged."
       }
     }
   ],
-  "tags": ["codex", "opentelemetry", "derived", "navigation", "phase-7"],
+  "tags": ["codex", "opentelemetry", "derived", "navigation", "phase-7", "phase-8"],
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": { "hidden": true },
   "timezone": "browser",
